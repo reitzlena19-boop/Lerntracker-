@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mein Lerntracker</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- LOGIN / REGISTRIERUNG / PROFIL OVERLAY -->
+  <div id="authOverlay" class="auth-overlay">
+    <div class="auth-card">
+      <h2 id="authTitle">Willkommen! ✨</h2>
+      <p id="authSubtitle">Richte dein Profil ein, um fortzufahren.</p>
+      
+      <form id="authForm">
+        <input type="text" id="usernameInput" placeholder="Dein Benutzername" required>
+        <input type="password" id="passwordInput" placeholder="Dein Passwort" required>
+        
+        <!-- Persönliche Angaben & Avatarauswahl -->
+        <div id="profileDetailsArea">
+          <input type="text" id="favSongInput" placeholder="🎵 Lieblingslied" required>
+          <input type="text" id="favSubjectInput" placeholder="📚 Lieblingsfach" required>
+          <input type="text" id="favTeacherInput" placeholder="👨‍🏫 Lieblingslehrer" required>
+
+          <div class="avatar-selection">
+            <p>Wähle deinen Avatar oder ein eigenes Bild:</p>
+            <div class="avatar-options">
+              <label><input type="radio" name="avatarOpt" value="🐉" checked> 🐉 Drache 1</label>
+              <label><input type="radio" name="avatarOpt" value="🐲"> 🐲 Drache 2</label>
+              <label><input type="radio" name="avatarOpt" value="⚡"> ⚡ Blitz</label>
+            </div>
+            <div class="custom-avatar-upload">
+              <label for="customAvatarInput">Oder eigenes Bild hochladen:</label>
+              <input type="file" id="customAvatarInput" accept="image/*">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" id="authSubmitBtn">Profil erstellen</button>
+        <button type="button" id="cancelEditBtn" class="secondary-btn hidden" style="margin-top: 8px;">Abbrechen</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- HAUPTAPP -->
+  <aside class="sidebar">
+    <!-- Profil-Header -->
+    <div class="user-profile-widget">
+      <div id="sidebarAvatar" class="sidebar-avatar">🐉</div>
+      <div>
+        <h3 id="sidebarUsername" class="sidebar-username">Benutzer</h3>
+        <button id="editProfileBtn" class="edit-profile-btn">⚙️ Bearbeiten</button>
+        <button id="logoutBtn" class="logout-btn">Abmelden 🚪</button>
+      </div>
+    </div>
+
+    <h2>Lerntracker 📚</h2>
+    <nav>
+      <button class="nav-btn active" data-target="dashboardView">🏠 Startseite</button>
+      <button class="nav-btn" data-target="timerView">⏱️ Timer</button>
+      <button class="nav-btn" data-target="calendarView">📅 Kalender</button>
+      <button class="nav-btn" data-target="gradesView">📊 Noten</button>
+      <button class="nav-btn" data-target="communityView">🏆 Community</button>
+    </nav>
+  </aside>
+
+  <main class="content">
+
+    <!-- STARTSEITE / DASHBOARD -->
+    <section id="dashboardView" class="view active">
+      <div class="cards-grid">
+        
+        <div class="card full-width">
+          <h2>Startseite ✨</h2>
+          <p class="quote">"Fokussiere dich auf deine Ziele und lerne jeden Tag ein Stückchen mehr!"</p>
+        </div>
+
+        <div class="card highlight-card">
+          <h3>🚨 Nächste Prüfung</h3>
+          <div id="nextExamContainer">
+            <p>Keine anstehenden Prüfungen eingetragen!</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>📈 Gesamter Notenschnitt</h3>
+          <div id="overallGpaDisplay" class="gpa-big">-.-</div>
+        </div>
+
+        <div class="card streak-card">
+          <h3>Lern-Streak</h3>
+          <div class="streak-flame">
+            <span class="flame-icon">🔮🔥</span>
+            <span id="streakCount" class="streak-number">0</span>
+          </div>
+          <p class="streak-text">Tage in Folge gelernt!</p>
+        </div>
+
+        <div class="card pet-card">
+          <h3>Dein Begleiter 🐉</h3>
+          <div class="pet-habitat">
+            <div id="petAvatar" class="pet-avatar">🥚</div>
+          </div>
+          <h4 id="petName">Drachenei</h4>
+          <p id="petStatus" class="pet-status">Lerne, um das Ei auszubrüten!</p>
+          <div class="progress-bar-container">
+            <div id="petXpBar" class="progress-bar" style="width: 0%;"></div>
+          </div>
+          <small id="petXpText">0 / 60 Min. bis Level 2</small>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TIMER -->
+    <section id="timerView" class="view">
+      <div class="cards-grid single-column">
+        <div class="card">
+          <h2>Lern-Timer ⏱️</h2>
+          <div id="timerDisplay">00:00:00</div>
+          
+          <div class="button-group">
+            <button id="startBtn">Session starten</button>
+            <button id="saveTimeBtn" class="secondary-btn">Lernzeit zuordnen & speichern</button>
+          </div>
+
+          <div id="assignExamArea" class="assign-area hidden">
+            <p>Wähle die Prüfung aus, für die du gelernt hast:</p>
+            <select id="timerExamSelect">
+              <option value="" disabled selected>Prüfung auswählen...</option>
+            </select>
+            <button id="confirmSaveBtn">Zeit eintragen</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- KALENDER -->
+    <section id="calendarView" class="view">
+      <div class="cards-grid">
+        <div class="card">
+          <h2>Prüfung eintragen 📝</h2>
+          <form id="examForm">
+            <input type="text" id="examSubject" placeholder="Fach (z.B. Mathe)" required>
+            <input type="date" id="examDate" required>
+            <input type="text" id="examTitle" placeholder="Thema / Art (z.B. Schulaufgabe)" required>
+            
+            <div class="color-picker-group">
+              <label for="examColor">Farbe für das Fach:</label>
+              <input type="color" id="examColor" value="#8A2BE2">
+            </div>
+
+            <button type="submit">Prüfung eintragen</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Monatsansicht 📅</h2>
+          <div class="calendar-header">
+            <button id="prevMonthBtn">&lt;</button>
+            <h3 id="currentMonthYear"></h3>
+            <button id="nextMonthBtn">&gt;</button>
+          </div>
+
+          <div class="calendar-grid-header">
+            <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
+          </div>
+
+          <div id="calendarGrid" class="calendar-grid"></div>
+        </div>
+
+        <div class="card full-width">
+          <h3>Alle Termine & Gelernte Zeit ⏱️</h3>
+          <ul id="examList"></ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- NOTENÜBERSICHT & NOTEN-PROGNOSE -->
+    <section id="gradesView" class="view">
+      <div class="cards-grid">
+        <div class="card">
+          <h2>Neues Fach ➕</h2>
+          <form id="subjectForm">
+            <input type="text" id="newSubjectName" placeholder="Neues Fach (z.B. Englisch)" required>
+            <button type="submit">Fach anlegen</button>
+          </form>
+        </div>
+
+        <div class="card">
+          <h2>Note eintragen ✏️</h2>
+          <form id="gradeForm">
+            <select id="gradeSubjectSelect" required>
+              <option value="" disabled selected>Fach auswählen...</option>
+            </select>
+            
+            <select id="gradeTypeSelect" required>
+              <option value="Schulaufgabe">Schulaufgabe</option>
+              <option value="Ex">Ex</option>
+              <option value="Abfrage">Abfrage</option>
+              <option value="Referat">Referat</option>
+              <option value="Mündlich">Mündliche Note</option>
+            </select>
+
+            <input type="number" id="gradeValueInput" min="1" max="6" step="0.1" placeholder="Note (1-6)" required>
+            <button type="submit">Note eintragen</button>
+          </form>
+        </div>
+
+        <div class="card full-width predictor-card">
+          <h2>🔮 Noten-Prognose Rechner</h2>
+          <p>Finde heraus, welche Note du brauchst, um dein Wunsch-Ziel zu erreichen!</p>
+          
+          <div class="predictor-inputs">
+            <select id="predictSubjectSelect">
+              <option value="" disabled selected>Fach wählen...</option>
+            </select>
+            <input type="number" id="targetGradeInput" min="1" max="6" step="0.1" placeholder="Wunschnote (z.B. 2.0)">
+            <button id="calcPredictionBtn">Berechnen</button>
+          </div>
+          <div id="predictionResult" class="prediction-result"></div>
+        </div>
+
+        <div class="card full-width">
+          <h3>Deine Fächer & Noten 📊</h3>
+          <div id="subjectsContainer" class="subjects-grid"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMMUNITY & RANKINGS -->
+    <section id="communityView" class="view">
+      <div class="cards-grid">
+        
+        <!-- ÖFFENTLICHES LERNZEIT-RANKING -->
+        <div class="card full-width highlight-card">
+          <h2>🥇 Top-Lerner (Öffentlich)</h2>
+          <p>Wer hat am meisten Zeit investiert?</p>
+          <ol id="leaderboardList" class="ranking-list"></ol>
+        </div>
+
+        <!-- ANONYME FAVORITEN-RANKINGS -->
+        <div class="card">
+          <h3>🎵 Beliebteste Lieder (Anonym)</h3>
+          <ol id="topSongsList" class="ranking-list"></ol>
+        </div>
+
+        <div class="card">
+          <h3>📚 Beliebteste Fächer (Anonym)</h3>
+          <ol id="topSubjectsList" class="ranking-list"></ol>
+        </div>
+
+        <div class="card full-width">
+          <h3>👨‍🏫 Beliebteste Lehrer (Anonym)</h3>
+          <ol id="topTeachersList" class="ranking-list"></ol>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

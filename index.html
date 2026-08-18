@@ -338,13 +338,25 @@
     import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyBlUj-ccMBroycdzY60UrG2ydn4y6fuSZ0",
-      authDomain: "lerntracker-21cb5.firebaseapp.com",
-      projectId: "lerntracker-21cb5",
-      storageBucket: "lerntracker-21cb5.firebasestorage.app",
-      messagingSenderId: "968578370974",
-      appId: "1:968578370974:web:fe3da577a5a9867b95da8f"
-    };
+
+  apiKey: "AIzaSyBlUj-ccMBroycdzY6OUrG2ydn4y6fuSZ0",
+
+  authDomain: "lerntracker-21cb5.firebaseapp.com",
+
+  projectId: "lerntracker-21cb5",
+
+  storageBucket: "lerntracker-21cb5.firebasestorage.app",
+
+  messagingSenderId: "968578370974",
+
+  appId: "1:968578370974:web:fe3da577a5a9867b95da8f"
+
+};
+
+
+// Initialize Firebase
+
+const app = initializeApp(firebaseConfig);
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);

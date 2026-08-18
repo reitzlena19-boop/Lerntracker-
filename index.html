@@ -4,302 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mein Lerntracker</title>
-  <style>
-    :root {
-      --bg-color: #f4f6f9;
-      --card-bg: #ffffff;
-      --primary: #4a90e2;
-      --primary-hover: #357abd;
-      --accent: #ff9f43;
-      --text-color: #2c3e50;
-      --border-color: #e2e8f0;
-      --danger: #e74c3c;
-      --success: #2ecc71;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-    }
-
-    .app-container {
-      max-width: 1000px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    /* Auth Screen */
-    .auth-card {
-      background: var(--card-bg);
-      padding: 30px;
-      border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-      max-width: 400px;
-      margin: 40px auto;
-      width: 100%;
-      text-align: center;
-    }
-
-    .auth-card h2 {
-      margin-bottom: 20px;
-      color: var(--primary);
-    }
-
-    .form-group {
-      margin-bottom: 15px;
-      text-align: left;
-    }
-
-    .form-group label {
-      display: block;
-      margin-bottom: 5px;
-      font-weight: 600;
-      font-size: 0.9em;
-    }
-
-    .form-group input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 1em;
-    }
-
-    button {
-      background-color: var(--primary);
-      color: white;
-      border: none;
-      padding: 10px 18px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    button:hover {
-      background-color: var(--primary-hover);
-    }
-
-    .auth-buttons {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
-
-    .auth-buttons button {
-      flex: 1;
-    }
-
-    .btn-secondary {
-      background-color: #95a5a6;
-    }
-    .btn-secondary:hover {
-      background-color: #7f8c8d;
-    }
-
-    /* Header & Navigation */
-    header {
-      background: var(--card-bg);
-      padding: 15px 25px;
-      border-radius: 12px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-
-    .user-info {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-    }
-
-    .nav-menu {
-      display: flex;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .nav-btn {
-      background: transparent;
-      color: var(--text-color);
-      border: 1px solid var(--border-color);
-      padding: 6px 12px;
-      font-size: 0.9em;
-    }
-
-    .nav-btn.active {
-      background: var(--primary);
-      color: white;
-      border-color: var(--primary);
-    }
-
-    /* Main Grid Layout */
-    .dashboard-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 20px;
-    }
-
-    .card {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-    }
-
-    .card h3 {
-      margin-bottom: 15px;
-      color: var(--primary);
-      border-bottom: 2px solid var(--border-color);
-      padding-bottom: 8px;
-    }
-
-    /* To-Do List Styles */
-    .todo-input-group {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 15px;
-    }
-
-    .todo-input-group input {
-      flex: 1;
-      padding: 8px;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-    }
-
-    .todo-list {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .todo-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: #f8fafc;
-      border-radius: 6px;
-      border: 1px solid var(--border-color);
-    }
-
-    .todo-item.completed span {
-      text-decoration: line-through;
-      color: #95a5a6;
-    }
-
-    .todo-actions {
-      display: flex;
-      gap: 6px;
-    }
-
-    /* Dragon Pet Section */
-    .pet-container {
-      text-align: center;
-    }
-
-    .pet-avatar {
-      font-size: 4rem;
-      margin: 15px 0;
-      animation: bounce 2s infinite ease-in-out;
-    }
-
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-10px); }
-    }
-
-    .progress-bar-bg {
-      background: #e0e0e0;
-      border-radius: 10px;
-      height: 15px;
-      width: 100%;
-      overflow: hidden;
-      margin-top: 10px;
-    }
-
-    .progress-bar-fill {
-      background: var(--accent);
-      height: 100%;
-      width: 0%;
-      transition: width 0.3s ease;
-    }
-
-    /* Timer Section */
-    .timer-display {
-      font-size: 3rem;
-      font-weight: bold;
-      text-align: center;
-      margin: 15px 0;
-      font-family: monospace;
-      color: var(--text-color);
-    }
-
-    .timer-controls {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-    }
-
-    /* Ranking List */
-    .ranking-list {
-      list-style: none;
-    }
-
-    .ranking-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 12px;
-      border-bottom: 1px solid var(--border-color);
-    }
-
-    .ranking-item:first-child {
-      font-weight: bold;
-      background-color: #fff9e6;
-      border-radius: 6px;
-    }
-
-    /* Grades & Subjects */
-    .subject-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .subject-item {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 8px;
-      background: #f8fafc;
-      border-radius: 6px;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .error-msg {
-      color: var(--danger);
-      font-size: 0.85em;
-      margin-top: 10px;
-    }
-  </style>
+  <!-- Google Fonts & FontAwesome Icons -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
@@ -307,100 +15,115 @@
 
     <!-- LOGIN / REGISTRIERUNG SCREEN -->
     <div id="authSection" class="auth-card">
-      <h2>Lerntracker Login</h2>
+      <div class="auth-header">
+        <div class="auth-icon"><i class="fa-solid fa-dragon"></i></div>
+        <h2>Willkommen zurück!</h2>
+        <p>Melde dich an, um deinen Lernfortschritt zu begleiten.</p>
+      </div>
+      
       <div class="form-group">
-        <label for="authEmail">E-Mail Adresse</label>
+        <label for="authEmail"><i class="fa-regular fa-envelope"></i> E-Mail Adresse</label>
         <input type="email" id="authEmail" placeholder="deine@email.de">
       </div>
+      
       <div class="form-group">
-        <label for="authPassword">Passwort</label>
+        <label for="authPassword"><i class="fa-solid fa-lock"></i> Passwort</label>
         <input type="password" id="authPassword" placeholder="••••••••">
       </div>
+      
       <div class="form-group">
-        <label for="authUsername">Benutzername (für Registrierung)</label>
+        <label for="authUsername"><i class="fa-regular fa-user"></i> Benutzername (nur bei Registrierung)</label>
         <input type="text" id="authUsername" placeholder="z.B. Alex">
       </div>
+      
       <div class="auth-buttons">
-        <button id="btnLogin">Anmelden</button>
-        <button id="btnRegister" class="btn-secondary">Registrieren</button>
+        <button id="btnLogin" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Anmelden</button>
+        <button id="btnRegister" class="btn btn-secondary"><i class="fa-solid fa-user-plus"></i> Registrieren</button>
       </div>
+      
       <p id="authError" class="error-msg"></p>
     </div>
 
     <!-- DASHBOARD (Sichtbar nach Login) -->
     <div id="dashboardSection" class="hidden">
       
-      <header>
-        <div>
-          <h1>🐉 Mein Lerntracker</h1>
-          <!-- Navigation / Filter auf der linken Seite -->
-          <div class="nav-menu">
-            <button class="nav-btn active" id="navAll">Alle Bereiche</button>
-            <button class="nav-btn" id="navTodos">📝 To-Do-Liste</button>
-          </div>
+      <!-- HEADER -->
+      <header class="main-header">
+        <div class="header-left">
+          <h1><i class="fa-solid fa-dragon header-logo"></i> Mein Lerntracker</h1>
+          
+          <!-- Navigation / Filter -->
+          <nav class="nav-menu">
+            <button class="nav-btn active" id="navAll"><i class="fa-solid fa-border-all"></i> Alle Bereiche</button>
+            <button class="nav-btn" id="navTodos"><i class="fa-solid fa-list-check"></i> To-Do-Liste</button>
+          </nav>
         </div>
+        
         <div class="user-info">
-          <span id="displayUsername">Hallo, Nutzer!</span>
-          <button id="btnLogout" class="btn-secondary">Abmelden</button>
+          <span id="displayUsername"><i class="fa-regular fa-circle-user"></i> Hallo, Nutzer!</span>
+          <button id="btnLogout" class="btn btn-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Abmelden</button>
         </div>
       </header>
 
+      <!-- DASHBOARD GRID -->
       <div class="dashboard-grid">
 
         <!-- LERNTIMER -->
-        <div class="card" id="cardTimer">
-          <h3>⏱️ Lerntimer</h3>
+        <div class="card card-timer" id="cardTimer">
+          <h3><i class="fa-regular fa-clock icon-title"></i> Lerntimer</h3>
           <div class="timer-display" id="timerDisplay">25:00</div>
           <div class="timer-controls">
-            <button id="btnStartTimer">Start</button>
-            <button id="btnPauseTimer" class="btn-secondary">Pause</button>
-            <button id="btnResetTimer" class="btn-secondary">Reset</button>
+            <button id="btnStartTimer" class="btn btn-accent"><i class="fa-solid fa-play"></i> Start</button>
+            <button id="btnPauseTimer" class="btn btn-secondary"><i class="fa-solid fa-pause"></i> Pause</button>
+            <button id="btnResetTimer" class="btn btn-secondary"><i class="fa-solid fa-rotate-left"></i> Reset</button>
           </div>
-          <div style="margin-top: 15px;">
-            <label style="font-size: 0.9em; font-weight: 600;">Lernfach:</label>
-            <input type="text" id="subjectInput" placeholder="z. B. Mathe" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
+          <div class="subject-select-group">
+            <label for="subjectInput"><i class="fa-solid fa-book"></i> Lernfach / Thema:</label>
+            <input type="text" id="subjectInput" placeholder="z. B. Mathematik">
           </div>
         </div>
 
         <!-- NOTENRECHNER -->
-        <div class="card" id="cardGrades">
-          <h3>📊 Fächer & Noten</h3>
-          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <input type="text" id="newSubjectName" placeholder="Fachname" style="flex:2; padding:6px; border:1px solid #ccc; border-radius:4px;">
-            <input type="number" id="newSubjectGrade" placeholder="Note" step="0.1" min="1" max="6" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
-            <button id="btnAddSubject">+</button>
+        <div class="card card-grades" id="cardGrades">
+          <h3><i class="fa-solid fa-chart-line icon-title"></i> Fächer & Noten</h3>
+          <div class="grade-input-group">
+            <input type="text" id="newSubjectName" placeholder="Fachname">
+            <input type="number" id="newSubjectGrade" placeholder="Note" step="0.1" min="1" max="6">
+            <button id="btnAddSubject" class="btn btn-primary"><i class="fa-solid fa-plus"></i></button>
           </div>
           <div class="subject-list" id="subjectList"></div>
-          <p style="margin-top: 15px; font-weight: bold;">Notendurchschnitt: <span id="averageGrade">-</span></p>
+          <div class="average-badge">
+            Notendurchschnitt: <span id="averageGrade">-</span>
+          </div>
         </div>
 
         <!-- TO-DO-LISTE -->
-        <div class="card" id="cardTodos">
-          <h3>📝 Meine To-Do-Liste</h3>
+        <div class="card card-todos" id="cardTodos">
+          <h3><i class="fa-solid fa-list-check icon-title"></i> Meine To-Do-Liste</h3>
           <div class="todo-input-group">
             <input type="text" id="newTodoInput" placeholder="Neue Aufgabe eingeben...">
-            <button id="btnAddTodo">+</button>
+            <button id="btnAddTodo" class="btn btn-primary"><i class="fa-solid fa-plus"></i></button>
           </div>
           <ul class="todo-list" id="todoList"></ul>
         </div>
 
         <!-- DRACHEN PET (Gamification) -->
-        <div class="card pet-container" id="cardPet">
-          <h3>🐲 Drachen-Begleiter</h3>
+        <div class="card card-pet pet-container" id="cardPet">
+          <h3><i class="fa-solid fa-egg icon-title"></i> Drachen-Begleiter</h3>
           <div class="pet-avatar" id="petAvatar">🥚</div>
-          <p><strong id="petStage">Drachen-Ei</strong></p>
-          <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Gesamte Lernzeit: <span id="totalLearnTime">0</span> Min.</p>
+          <p class="pet-stage-title"><strong id="petStage">Drachen-Ei</strong></p>
+          <p class="pet-stats"><i class="fa-solid fa-stopwatch"></i> Gesamte Lernzeit: <span id="totalLearnTime">0</span> Min.</p>
           <div class="progress-bar-bg">
             <div class="progress-bar-fill" id="petProgress"></div>
           </div>
-          <p style="font-size: 0.8em; margin-top: 5px; color: #888;">Nächstes Level in: <span id="nextLevelMinutes">30</span> Min.</p>
+          <p class="pet-next-level">Nächstes Level in: <span id="nextLevelMinutes">30</span> Min.</p>
         </div>
 
         <!-- COMMUNITY RANKING (Realtime Cloud Sync) -->
-        <div class="card" id="cardRanking">
-          <h3>🏆 Community Leaderboard</h3>
+        <div class="card card-ranking" id="cardRanking">
+          <h3><i class="fa-solid fa-trophy icon-title"></i> Community Leaderboard</h3>
           <ul class="ranking-list" id="rankingList">
-            <li class="ranking-item"><span>Lade Ranking...</span></li>
+            <li class="ranking-item"><span><i class="fa-solid fa-spinner fa-spin"></i> Lade Ranking...</span></li>
           </ul>
         </div>
 

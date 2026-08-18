@@ -111,7 +111,7 @@ function initApp() {
 }
 
 // -------------------------------------------------------------
-// NAVIGATION FILTER (Links im Menü)
+// NAVIGATION FILTER
 // -------------------------------------------------------------
 
 function filterView(view) {
@@ -193,7 +193,7 @@ async function loadUserData(uid) {
     userProfile = { username: "Lerner", totalMinutes: 0, subjects: [], todos: [] };
   }
 
-  displayUsername.textContent = `Hallo, ${userProfile.username}!`;
+  displayUsername.innerHTML = `<i class="fa-regular fa-circle-user"></i> Hallo, ${escapeHtml(userProfile.username)}!`;
   updatePetUI();
   renderSubjects();
   renderTodos();
@@ -216,7 +216,7 @@ function listenToLeaderboard() {
       const data = doc.data();
       const li = document.createElement('li');
       li.className = 'ranking-item';
-      li.innerHTML = `<span>#${rank} ${escapeHtml(data.username || 'Anonym')}</span> <span>${data.totalMinutes || 0} Min</span>`;
+      li.innerHTML = `<span>#${rank} ${escapeHtml(data.username || 'Anonym')}</span> <span><strong>${data.totalMinutes || 0}</strong> Min</span>`;
       rankingList.appendChild(li);
       rank++;
     });
@@ -260,7 +260,7 @@ function renderTodos() {
   const todos = userProfile.todos || [];
 
   if (todos.length === 0) {
-    todoList.innerHTML = '<p style="font-size:0.85em; color:#888;">Keine offenen Aufgaben!</p>';
+    todoList.innerHTML = '<p style="font-size:0.85em; color:#888; text-align:center; padding:10px;">Keine offenen Aufgaben!</p>';
     return;
   }
 
@@ -270,8 +270,8 @@ function renderTodos() {
     li.innerHTML = `
       <span>${escapeHtml(todo.text)}</span>
       <div class="todo-actions">
-        <button class="btn-secondary" style="padding: 2px 8px; font-size:0.8em; background:#2ecc71;" onclick="toggleTodo(${idx})">✓</button>
-        <button class="btn-secondary" style="padding: 2px 8px; font-size:0.8em;" onclick="removeTodo(${idx})">X</button>
+        <button class="btn btn-secondary btn-icon" style="background:#55efc4; color:#fff;" onclick="toggleTodo(${idx})"><i class="fa-solid fa-check"></i></button>
+        <button class="btn btn-secondary btn-icon" style="background:#ff7675; color:#fff;" onclick="removeTodo(${idx})"><i class="fa-solid fa-xmark"></i></button>
       </div>
     `;
     todoList.appendChild(li);
@@ -396,7 +396,7 @@ function renderSubjects() {
   const subjects = userProfile.subjects || [];
 
   if (subjects.length === 0) {
-    subjectList.innerHTML = '<p style="font-size:0.85em; color:#888;">Noch keine Fächer eingetragen.</p>';
+    subjectList.innerHTML = '<p style="font-size:0.85em; color:#888; text-align:center; padding:10px;">Noch keine Fächer eingetragen.</p>';
     averageGrade.textContent = '-';
     return;
   }
@@ -409,7 +409,7 @@ function renderSubjects() {
     item.className = 'subject-item';
     item.innerHTML = `
       <span><strong>${escapeHtml(subj.name)}</strong>: Note ${subj.grade.toFixed(1)}</span>
-      <button class="btn-secondary" style="padding: 2px 8px; font-size:0.8em;" onclick="removeSubject(${idx})">X</button>
+      <button class="btn btn-secondary btn-icon" style="background:#ff7675; color:#fff;" onclick="removeSubject(${idx})"><i class="fa-solid fa-trash"></i></button>
     `;
     subjectList.appendChild(item);
   });

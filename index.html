@@ -4,269 +4,360 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mein Lerntracker</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #f4f6f9;
+      --card-bg: #ffffff;
+      --primary: #4a90e2;
+      --primary-hover: #357abd;
+      --accent: #ff9f43;
+      --text-color: #2c3e50;
+      --border-color: #e2e8f0;
+      --danger: #e74c3c;
+      --success: #2ecc71;
+    }
 
-  <link rel="stylesheet" href="style.css">
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .app-container {
+      max-width: 1000px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Auth Screen */
+    .auth-card {
+      background: var(--card-bg);
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+      max-width: 400px;
+      margin: 40px auto;
+      width: 100%;
+      text-align: center;
+    }
+
+    .auth-card h2 {
+      margin-bottom: 20px;
+      color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: var(--primary);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+
+    button:hover {
+      background-color: var(--primary-hover);
+    }
+
+    .auth-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .auth-buttons button {
+      flex: 1;
+    }
+
+    .btn-secondary {
+      background-color: #95a5a6;
+    }
+    .btn-secondary:hover {
+      background-color: #7f8c8d;
+    }
+
+    /* Header & Navigation */
+    header {
+      background: var(--card-bg);
+      padding: 15px 25px;
+      border-radius: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    /* Main Grid Layout */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .card h3 {
+      margin-bottom: 15px;
+      color: var(--primary);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 8px;
+    }
+
+    /* Dragon Pet Section */
+    .pet-container {
+      text-align: center;
+    }
+
+    .pet-avatar {
+      font-size: 4rem;
+      margin: 15px 0;
+      animation: bounce 2s infinite ease-in-out;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .progress-bar-bg {
+      background: #e0e0e0;
+      border-radius: 10px;
+      height: 15px;
+      width: 100%;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress-bar-fill {
+      background: var(--accent);
+      height: 100%;
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    /* Timer Section */
+    .timer-display {
+      font-size: 3rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 15px 0;
+      font-family: monospace;
+      color: var(--text-color);
+    }
+
+    .timer-controls {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    /* Ranking List */
+    .ranking-list {
+      list-style: none;
+    }
+
+    .ranking-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .ranking-item:first-child {
+      font-weight: bold;
+      background-color: #fff9e6;
+      border-radius: 6px;
+    }
+
+    /* Grades & Subjects */
+    .subject-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .subject-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      background: #f8fafc;
+      border-radius: 6px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .error-msg {
+      color: var(--danger);
+      font-size: 0.85em;
+      margin-top: 10px;
+    }
+  </style>
 </head>
 <body>
 
-  <!-- LOGIN / REGISTRIERUNG / PROFIL OVERLAY -->
-  <div id="authOverlay" class="auth-overlay">
-    <div class="auth-card">
-      <h2 id="authTitle">Willkommen! ✨</h2>
-      <p id="authSubtitle">Richte dein Profil ein, um fortzufahren.</p>
-      
-      <form id="authForm">
-        <input type="text" id="usernameInput" placeholder="Dein Benutzername" required>
-        <input type="password" id="passwordInput" placeholder="Dein Passwort" required>
-        
-        <!-- Persönliche Angaben & Avatarauswahl -->
-        <div id="profileDetailsArea">
-          <input type="text" id="favSongInput" placeholder="🎵 Lieblingslied" required>
-          <input type="text" id="favSubjectInput" placeholder="📚 Lieblingsfach" required>
-          <input type="text" id="favTeacherInput" placeholder="👨‍🏫 Lieblingslehrer" required>
+  <div class="app-container">
 
-          <div class="avatar-selection">
-            <p>Wähle deinen Avatar oder ein eigenes Bild:</p>
-            <div class="avatar-options">
-              <label><input type="radio" name="avatarOpt" value="🐉" checked> 🐉 Drache 1</label>
-              <label><input type="radio" name="avatarOpt" value="🐲"> 🐲 Drache 2</label>
-              <label><input type="radio" name="avatarOpt" value="⚡"> ⚡ Blitz</label>
-            </div>
-            <div class="custom-avatar-upload">
-              <label for="customAvatarInput">Oder eigenes Bild hochladen:</label>
-              <input type="file" id="customAvatarInput" accept="image/*">
-            </div>
+    <!-- LOGIN / REGISTRIERUNG SCREEN -->
+    <div id="authSection" class="auth-card">
+      <h2>Lerntracker Login</h2>
+      <div class="form-group">
+        <label for="authEmail">E-Mail Adresse</label>
+        <input type="email" id="authEmail" placeholder="deine@email.de">
+      </div>
+      <div class="form-group">
+        <label for="authPassword">Passwort</label>
+        <input type="password" id="authPassword" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label for="authUsername">Benutzername (für Registrierung)</label>
+        <input type="text" id="authUsername" placeholder="z.B. Alex">
+      </div>
+      <div class="auth-buttons">
+        <button id="btnLogin">Anmelden</button>
+        <button id="btnRegister" class="btn-secondary">Registrieren</button>
+      </div>
+      <p id="authError" class="error-msg"></p>
+    </div>
+
+    <!-- DASHBOARD (Nur sichtbar nach Login) -->
+    <div id="dashboardSection" class="hidden">
+      
+      <header>
+        <h1>🐉 Mein Lerntracker</h1>
+        <div class="user-info">
+          <span id="displayUsername">Hallo, Nutzer!</span>
+          <button id="btnLogout" class="btn-secondary">Abmelden</button>
+        </div>
+      </header>
+
+      <div class="dashboard-grid">
+
+        <!-- LERNTIMER -->
+        <div class="card">
+          <h3>⏱️ Lerntimer</h3>
+          <div class="timer-display" id="timerDisplay">25:00</div>
+          <div class="timer-controls">
+            <button id="btnStartTimer">Start</button>
+            <button id="btnPauseTimer" class="btn-secondary">Pause</button>
+            <button id="btnResetTimer" class="btn-secondary">Reset</button>
+          </div>
+          <div style="margin-top: 15px;">
+            <label style="font-size: 0.9em; font-weight: 600;">Lernfach:</label>
+            <input type="text" id="subjectInput" placeholder="z. B. Mathe" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px;">
           </div>
         </div>
 
-        <button type="submit" id="authSubmitBtn">Profil erstellen</button>
-        <button type="button" id="cancelEditBtn" class="secondary-btn hidden" style="margin-top: 8px;">Abbrechen</button>
-      </form>
+        <!-- DRACHEN PET (Gamification) -->
+        <div class="card pet-container">
+          <h3>🐲 Drachen-Begleiter</h3>
+          <div class="pet-avatar" id="petAvatar">🥚</div>
+          <p><strong id="petStage">Drachen-Ei</strong></p>
+          <p style="font-size: 0.9em; color: #666; margin-top: 5px;">Gesamte Lernzeit: <span id="totalLearnTime">0</span> Min.</p>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="petProgress"></div>
+          </div>
+          <p style="font-size: 0.8em; margin-top: 5px; color: #888;">Nächstes Level in: <span id="nextLevelMinutes">30</span> Min.</p>
+        </div>
+
+        <!-- COMMUNITY RANKING (Realtime Cloud Sync) -->
+        <div class="card">
+          <h3>🏆 Community Leaderboard</h3>
+          <ul class="ranking-list" id="rankingList">
+            <li class="ranking-item"><span>Lade Ranking...</span></li>
+          </ul>
+        </div>
+
+        <!-- NOTENRECHNER -->
+        <div class="card">
+          <h3>📊 Fächer & Noten</h3>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <input type="text" id="newSubjectName" placeholder="Fachname" style="flex:2; padding:6px; border:1px solid #ccc; border-radius:4px;">
+            <input type="number" id="newSubjectGrade" placeholder="Note" step="0.1" min="1" max="6" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
+            <button id="btnAddSubject">+</button>
+          </div>
+          <div class="subject-list" id="subjectList"></div>
+          <p style="margin-top: 15px; font-weight: bold;">Notendurchschnitt: <span id="averageGrade">-</span></p>
+        </div>
+
+      </div>
     </div>
+
   </div>
 
-  <!-- HAUPTAPP -->
-  <aside class="sidebar">
-    <!-- Profil-Header -->
-    <div class="user-profile-widget">
-      <div id="sidebarAvatar" class="sidebar-avatar">🐉</div>
-      <div>
-        <h3 id="sidebarUsername" class="sidebar-username">Benutzer</h3>
-        <button id="editProfileBtn" class="edit-profile-btn">⚙️ Bearbeiten</button>
-        <button id="logoutBtn" class="logout-btn">Abmelden 🚪</button>
-      </div>
-    </div>
+  <!-- FIREBASE MODULE & CONFIGURATION -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    <h2>Lerntracker 📚</h2>
-    <nav>
-      <button class="nav-btn active" data-target="dashboardView">🏠 Startseite</button>
-      <button class="nav-btn" data-target="timerView">⏱️ Timer</button>
-      <button class="nav-btn" data-target="calendarView">📅 Kalender</button>
-      <button class="nav-btn" data-target="gradesView">📊 Noten</button>
-      <button class="nav-btn" data-target="communityView">🏆 Community</button>
-    </nav>
-  </aside>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlUj-ccMBroycdzY60UrG2ydn4y6fuSZ0",
+      authDomain: "lerntracker-21cb5.firebaseapp.com",
+      projectId: "lerntracker-21cb5",
+      storageBucket: "lerntracker-21cb5.firebasestorage.app",
+      messagingSenderId: "968578370974",
+      appId: "1:968578370974:web:fe3da577a5a9867b95da8f"
+    };
 
-  <main class="content">
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    <!-- STARTSEITE / DASHBOARD -->
-    <section id="dashboardView" class="view active">
-      <div class="cards-grid">
-        
-        <div class="card full-width">
-          <h2>Startseite ✨</h2>
-          <p class="quote">"Fokussiere dich auf deine Ziele und lerne jeden Tag ein Stückchen mehr!"</p>
-        </div>
+    // Globale Exporte für script.js
+    window.auth = auth;
+    window.db = db;
+    window.fbAuth = { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut };
+    window.fbDb = { doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit };
+  </script>
 
-        <div class="card highlight-card">
-          <h3>🚨 Nächste Prüfung</h3>
-          <div id="nextExamContainer">
-            <p>Keine anstehenden Prüfungen eingetragen!</p>
-          </div>
-        </div>
-
-        <div class="card">
-          <h3>📈 Gesamter Notenschnitt</h3>
-          <div id="overallGpaDisplay" class="gpa-big">-.-</div>
-        </div>
-
-        <div class="card streak-card">
-          <h3>Lern-Streak</h3>
-          <div class="streak-flame">
-            <span class="flame-icon">🔮🔥</span>
-            <span id="streakCount" class="streak-number">0</span>
-          </div>
-          <p class="streak-text">Tage in Folge gelernt!</p>
-        </div>
-
-        <div class="card pet-card">
-          <h3>Dein Begleiter 🐉</h3>
-          <div class="pet-habitat">
-            <div id="petAvatar" class="pet-avatar">🥚</div>
-          </div>
-          <h4 id="petName">Drachenei</h4>
-          <p id="petStatus" class="pet-status">Lerne, um das Ei auszubrüten!</p>
-          <div class="progress-bar-container">
-            <div id="petXpBar" class="progress-bar" style="width: 0%;"></div>
-          </div>
-          <small id="petXpText">0 / 60 Min. bis Level 2</small>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- TIMER -->
-    <section id="timerView" class="view">
-      <div class="cards-grid single-column">
-        <div class="card">
-          <h2>Lern-Timer ⏱️</h2>
-          <div id="timerDisplay">00:00:00</div>
-          
-          <div class="button-group">
-            <button id="startBtn">Session starten</button>
-            <button id="saveTimeBtn" class="secondary-btn">Lernzeit zuordnen & speichern</button>
-          </div>
-
-          <div id="assignExamArea" class="assign-area hidden">
-            <p>Wähle die Prüfung aus, für die du gelernt hast:</p>
-            <select id="timerExamSelect">
-              <option value="" disabled selected>Prüfung auswählen...</option>
-            </select>
-            <button id="confirmSaveBtn">Zeit eintragen</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- KALENDER -->
-    <section id="calendarView" class="view">
-      <div class="cards-grid">
-        <div class="card">
-          <h2>Prüfung eintragen 📝</h2>
-          <form id="examForm">
-            <input type="text" id="examSubject" placeholder="Fach (z.B. Mathe)" required>
-            <input type="date" id="examDate" required>
-            <input type="text" id="examTitle" placeholder="Thema / Art (z.B. Schulaufgabe)" required>
-            
-            <div class="color-picker-group">
-              <label for="examColor">Farbe für das Fach:</label>
-              <input type="color" id="examColor" value="#8A2BE2">
-            </div>
-
-            <button type="submit">Prüfung eintragen</button>
-          </form>
-        </div>
-
-        <div class="card">
-          <h2>Monatsansicht 📅</h2>
-          <div class="calendar-header">
-            <button id="prevMonthBtn">&lt;</button>
-            <h3 id="currentMonthYear"></h3>
-            <button id="nextMonthBtn">&gt;</button>
-          </div>
-
-          <div class="calendar-grid-header">
-            <div>Mo</div><div>Di</div><div>Mi</div><div>Do</div><div>Fr</div><div>Sa</div><div>So</div>
-          </div>
-
-          <div id="calendarGrid" class="calendar-grid"></div>
-        </div>
-
-        <div class="card full-width">
-          <h3>Alle Termine & Gelernte Zeit ⏱️</h3>
-          <ul id="examList"></ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- NOTENÜBERSICHT & NOTEN-PROGNOSE -->
-    <section id="gradesView" class="view">
-      <div class="cards-grid">
-        <div class="card">
-          <h2>Neues Fach ➕</h2>
-          <form id="subjectForm">
-            <input type="text" id="newSubjectName" placeholder="Neues Fach (z.B. Englisch)" required>
-            <button type="submit">Fach anlegen</button>
-          </form>
-        </div>
-
-        <div class="card">
-          <h2>Note eintragen ✏️</h2>
-          <form id="gradeForm">
-            <select id="gradeSubjectSelect" required>
-              <option value="" disabled selected>Fach auswählen...</option>
-            </select>
-            
-            <select id="gradeTypeSelect" required>
-              <option value="Schulaufgabe">Schulaufgabe</option>
-              <option value="Ex">Ex</option>
-              <option value="Abfrage">Abfrage</option>
-              <option value="Referat">Referat</option>
-              <option value="Mündlich">Mündliche Note</option>
-            </select>
-
-            <input type="number" id="gradeValueInput" min="1" max="6" step="0.1" placeholder="Note (1-6)" required>
-            <button type="submit">Note eintragen</button>
-          </form>
-        </div>
-
-        <div class="card full-width predictor-card">
-          <h2>🔮 Noten-Prognose Rechner</h2>
-          <p>Finde heraus, welche Note du brauchst, um dein Wunsch-Ziel zu erreichen!</p>
-          
-          <div class="predictor-inputs">
-            <select id="predictSubjectSelect">
-              <option value="" disabled selected>Fach wählen...</option>
-            </select>
-            <input type="number" id="targetGradeInput" min="1" max="6" step="0.1" placeholder="Wunschnote (z.B. 2.0)">
-            <button id="calcPredictionBtn">Berechnen</button>
-          </div>
-          <div id="predictionResult" class="prediction-result"></div>
-        </div>
-
-        <div class="card full-width">
-          <h3>Deine Fächer & Noten 📊</h3>
-          <div id="subjectsContainer" class="subjects-grid"></div>
-        </div>
-      </div>
-    </section>
-
-    <!-- COMMUNITY & RANKINGS -->
-    <section id="communityView" class="view">
-      <div class="cards-grid">
-        
-        <!-- ÖFFENTLICHES LERNZEIT-RANKING -->
-        <div class="card full-width highlight-card">
-          <h2>🥇 Top-Lerner (Öffentlich)</h2>
-          <p>Wer hat am meisten Zeit investiert?</p>
-          <ol id="leaderboardList" class="ranking-list"></ol>
-        </div>
-
-        <!-- ANONYME FAVORITEN-RANKINGS -->
-        <div class="card">
-          <h3>🎵 Beliebteste Lieder (Anonym)</h3>
-          <ol id="topSongsList" class="ranking-list"></ol>
-        </div>
-
-        <div class="card">
-          <h3>📚 Beliebteste Fächer (Anonym)</h3>
-          <ol id="topSubjectsList" class="ranking-list"></ol>
-        </div>
-
-        <div class="card full-width">
-          <h3>👨‍🏫 Beliebteste Lehrer (Anonym)</h3>
-          <ol id="topTeachersList" class="ranking-list"></ol>
-        </div>
-
-      </div>
-    </section>
-
-  </main>
-
+  <!-- Hauptskript -->
   <script src="script.js"></script>
 </body>
 </html>

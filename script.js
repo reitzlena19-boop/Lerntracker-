@@ -3,7 +3,8 @@ let currentUser = null;
 let userProfile = {
   username: "Anonym",
   totalMinutes: 0,
-  subjects: []
+  subjects: [],
+  todos: []
 };
 
 // Timer Variablen
@@ -22,6 +23,15 @@ const btnRegister = document.getElementById('btnRegister');
 const btnLogout = document.getElementById('btnLogout');
 const authError = document.getElementById('authError');
 const displayUsername = document.getElementById('displayUsername');
+
+// Navigation
+const navAll = document.getElementById('navAll');
+const navTodos = document.getElementById('navTodos');
+const cardTimer = document.getElementById('cardTimer');
+const cardGrades = document.getElementById('cardGrades');
+const cardPet = document.getElementById('cardPet');
+const cardRanking = document.getElementById('cardRanking');
+const cardTodos = document.getElementById('cardTodos');
 
 // Timer Elemente
 const timerDisplay = document.getElementById('timerDisplay');
@@ -44,12 +54,16 @@ const btnAddSubject = document.getElementById('btnAddSubject');
 const subjectList = document.getElementById('subjectList');
 const averageGrade = document.getElementById('averageGrade');
 
+// To-Do Elemente
+const newTodoInput = document.getElementById('newTodoInput');
+const btnAddTodo = document.getElementById('btnAddTodo');
+const todoList = document.getElementById('todoList');
+
 // -------------------------------------------------------------
-// FIREBASE AUTHENTICATION & INITIALISIERUNG
+// INITIALISIERUNG
 // -------------------------------------------------------------
 
 window.addEventListener('load', () => {
-  // Warten bis Firebase-Skript geladen ist
   const checkFirebase = setInterval(() => {
     if (window.auth && window.db) {
       clearInterval(checkFirebase);
@@ -61,7 +75,6 @@ window.addEventListener('load', () => {
 function initApp() {
   const { onAuthStateChanged } = window.fbAuth;
 
-  // Status-Meldung bei Auth-Änderung
   onAuthStateChanged(window.auth, (user) => {
     if (user) {
       currentUser = user;
@@ -76,18 +89,49 @@ function initApp() {
     }
   });
 
-  // Event Listener Auth
+  // Auth Events
   btnLogin.addEventListener('click', handleLogin);
   btnRegister.addEventListener('click', handleRegister);
   btnLogout.addEventListener('click', () => window.fbAuth.signOut(window.auth));
 
-  // Event Listener Timer
+  // Timer Events
   btnStartTimer.addEventListener('click', startTimer);
   btnPauseTimer.addEventListener('click', pauseTimer);
   btnResetTimer.addEventListener('click', resetTimer);
 
-  // Event Listener Noten
+  // Noten Events
   btnAddSubject.addEventListener('click', addSubject);
+
+  // To-Do Events
+  btnAddTodo.addEventListener('click', addTodo);
+
+  // Navigation Events
+  navAll.addEventListener('click', () => filterView('all'));
+  navTodos.addEventListener('click', () => filterView('todos'));
+}
+
+// -------------------------------------------------------------
+// NAVIGATION FILTER (Links im Menü)
+// -------------------------------------------------------------
+
+function filterView(view) {
+  if (view === 'todos') {
+    navAll.classList.remove('active');
+    navTodos.classList.add('active');
+    cardTimer.classList.add('hidden');
+    cardGrades.classList.add('hidden');
+    cardPet.classList.add('hidden');
+    cardRanking.classList.add('hidden');
+    cardTodos.classList.remove('hidden');
+  } else {
+    navTodos.classList.remove('active');
+    navAll.classList.add('active');
+    cardTimer.classList.remove('hidden');
+    cardGrades.classList.remove('hidden');
+    cardPet.classList.remove('hidden');
+    cardRanking.classList.remove('hidden');
+    cardTodos.classList.remove('hidden');
+  }
 }
 
 // -------------------------------------------------------------
@@ -124,11 +168,11 @@ async function handleRegister() {
 
   try {
     const cred = await window.fbAuth.createUserWithEmailAndPassword(window.auth, email, password);
-    // Initiales Nutzerprofil in Firestore erstellen
     await window.fbDb.setDoc(window.fbDb.doc(window.db, 'users', cred.user.uid), {
       username: username,
       totalMinutes: 0,
-      subjects: []
+      subjects: [],
+      todos: []
     });
   } catch (err) {
     authError.textContent = 'Fehler beim Registrieren: ' + err.message;
@@ -136,7 +180,7 @@ async function handleRegister() {
 }
 
 // -------------------------------------------------------------
-// FIRESTORE CLOUD SYNC & REALTIME UPDATES
+// CLOUD SYNC & REALTIME UPDATES
 // -------------------------------------------------------------
 
 async function loadUserData(uid) {
@@ -144,14 +188,15 @@ async function loadUserData(uid) {
   const docSnap = await window.fbDb.getDoc(userDocRef);
 
   if (docSnap.exists()) {
-    userProfile = docSnap.data();
+    userProfile = { todos: [], subjects: [], ...docSnap.data() };
   } else {
-    userProfile = { username: "Lerner", totalMinutes: 0, subjects: [] };
+    userProfile = { username: "Lerner", totalMinutes: 0, subjects: [], todos: [] };
   }
 
   displayUsername.textContent = `Hallo, ${userProfile.username}!`;
   updatePetUI();
   renderSubjects();
+  renderTodos();
 }
 
 async function saveUserData() {
@@ -177,6 +222,64 @@ function listenToLeaderboard() {
     });
   });
 }
+
+// -------------------------------------------------------------
+// TO-DO LOGIK
+// -------------------------------------------------------------
+
+function addTodo() {
+  const text = newTodoInput.value.trim();
+  if (!text) return;
+
+  if (!userProfile.todos) userProfile.todos = [];
+  userProfile.todos.push({ text, completed: false });
+
+  newTodoInput.value = '';
+  renderTodos();
+  saveUserData();
+}
+
+function toggleTodo(index) {
+  if (userProfile.todos && userProfile.todos[index]) {
+    userProfile.todos[index].completed = !userProfile.todos[index].completed;
+    renderTodos();
+    saveUserData();
+  }
+}
+
+function removeTodo(index) {
+  if (userProfile.todos) {
+    userProfile.todos.splice(index, 1);
+    renderTodos();
+    saveUserData();
+  }
+}
+
+function renderTodos() {
+  todoList.innerHTML = '';
+  const todos = userProfile.todos || [];
+
+  if (todos.length === 0) {
+    todoList.innerHTML = '<p style="font-size:0.85em; color:#888;">Keine offenen Aufgaben!</p>';
+    return;
+  }
+
+  todos.forEach((todo, idx) => {
+    const li = document.createElement('li');
+    li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
+    li.innerHTML = `
+      <span>${escapeHtml(todo.text)}</span>
+      <div class="todo-actions">
+        <button class="btn-secondary" style="padding: 2px 8px; font-size:0.8em; background:#2ecc71;" onclick="toggleTodo(${idx})">✓</button>
+        <button class="btn-secondary" style="padding: 2px 8px; font-size:0.8em;" onclick="removeTodo(${idx})">X</button>
+      </div>
+    `;
+    todoList.appendChild(li);
+  });
+}
+
+window.toggleTodo = toggleTodo;
+window.removeTodo = removeTodo;
 
 // -------------------------------------------------------------
 // DRACHEN PET GAMIFICATION LOGIK
@@ -315,9 +418,8 @@ function renderSubjects() {
   averageGrade.textContent = avg.toFixed(2);
 }
 
-window.removeSubject = removeSubject; // Für HTML-Inline Buttons
+window.removeSubject = removeSubject;
 
-// Hilfsfunktion gegen Cross-Site Scripting (XSS)
 function escapeHtml(str) {
   return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }

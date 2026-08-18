@@ -126,6 +126,26 @@
       gap: 15px;
     }
 
+    .nav-menu {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      color: var(--text-color);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      font-size: 0.9em;
+    }
+
+    .nav-btn.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
     /* Main Grid Layout */
     .dashboard-grid {
       display: grid;
@@ -145,6 +165,47 @@
       color: var(--primary);
       border-bottom: 2px solid var(--border-color);
       padding-bottom: 8px;
+    }
+
+    /* To-Do List Styles */
+    .todo-input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 15px;
+    }
+
+    .todo-input-group input {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+    }
+
+    .todo-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .todo-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 12px;
+      background: #f8fafc;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+
+    .todo-item.completed span {
+      text-decoration: line-through;
+      color: #95a5a6;
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 6px;
     }
 
     /* Dragon Pet Section */
@@ -266,11 +327,18 @@
       <p id="authError" class="error-msg"></p>
     </div>
 
-    <!-- DASHBOARD (Nur sichtbar nach Login) -->
+    <!-- DASHBOARD (Sichtbar nach Login) -->
     <div id="dashboardSection" class="hidden">
       
       <header>
-        <h1>🐉 Mein Lerntracker</h1>
+        <div>
+          <h1>🐉 Mein Lerntracker</h1>
+          <!-- Navigation / Filter auf der linken Seite -->
+          <div class="nav-menu">
+            <button class="nav-btn active" id="navAll">Alle Bereiche</button>
+            <button class="nav-btn" id="navTodos">📝 To-Do-Liste</button>
+          </div>
+        </div>
         <div class="user-info">
           <span id="displayUsername">Hallo, Nutzer!</span>
           <button id="btnLogout" class="btn-secondary">Abmelden</button>
@@ -280,7 +348,7 @@
       <div class="dashboard-grid">
 
         <!-- LERNTIMER -->
-        <div class="card">
+        <div class="card" id="cardTimer">
           <h3>⏱️ Lerntimer</h3>
           <div class="timer-display" id="timerDisplay">25:00</div>
           <div class="timer-controls">
@@ -294,8 +362,30 @@
           </div>
         </div>
 
+        <!-- NOTENRECHNER -->
+        <div class="card" id="cardGrades">
+          <h3>📊 Fächer & Noten</h3>
+          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <input type="text" id="newSubjectName" placeholder="Fachname" style="flex:2; padding:6px; border:1px solid #ccc; border-radius:4px;">
+            <input type="number" id="newSubjectGrade" placeholder="Note" step="0.1" min="1" max="6" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
+            <button id="btnAddSubject">+</button>
+          </div>
+          <div class="subject-list" id="subjectList"></div>
+          <p style="margin-top: 15px; font-weight: bold;">Notendurchschnitt: <span id="averageGrade">-</span></p>
+        </div>
+
+        <!-- TO-DO-LISTE -->
+        <div class="card" id="cardTodos">
+          <h3>📝 Meine To-Do-Liste</h3>
+          <div class="todo-input-group">
+            <input type="text" id="newTodoInput" placeholder="Neue Aufgabe eingeben...">
+            <button id="btnAddTodo">+</button>
+          </div>
+          <ul class="todo-list" id="todoList"></ul>
+        </div>
+
         <!-- DRACHEN PET (Gamification) -->
-        <div class="card pet-container">
+        <div class="card pet-container" id="cardPet">
           <h3>🐲 Drachen-Begleiter</h3>
           <div class="pet-avatar" id="petAvatar">🥚</div>
           <p><strong id="petStage">Drachen-Ei</strong></p>
@@ -307,23 +397,11 @@
         </div>
 
         <!-- COMMUNITY RANKING (Realtime Cloud Sync) -->
-        <div class="card">
+        <div class="card" id="cardRanking">
           <h3>🏆 Community Leaderboard</h3>
           <ul class="ranking-list" id="rankingList">
             <li class="ranking-item"><span>Lade Ranking...</span></li>
           </ul>
-        </div>
-
-        <!-- NOTENRECHNER -->
-        <div class="card">
-          <h3>📊 Fächer & Noten</h3>
-          <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-            <input type="text" id="newSubjectName" placeholder="Fachname" style="flex:2; padding:6px; border:1px solid #ccc; border-radius:4px;">
-            <input type="number" id="newSubjectGrade" placeholder="Note" step="0.1" min="1" max="6" style="flex:1; padding:6px; border:1px solid #ccc; border-radius:4px;">
-            <button id="btnAddSubject">+</button>
-          </div>
-          <div class="subject-list" id="subjectList"></div>
-          <p style="margin-top: 15px; font-weight: bold;">Notendurchschnitt: <span id="averageGrade">-</span></p>
         </div>
 
       </div>
@@ -338,39 +416,24 @@
     import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
-
-  apiKey: "AIzaSyBlUj-ccMBroycdzY6OUrG2ydn4y6fuSZ0",
-
-  authDomain: "lerntracker-21cb5.firebaseapp.com",
-
-  projectId: "lerntracker-21cb5",
-
-  storageBucket: "lerntracker-21cb5.firebasestorage.app",
-
-  messagingSenderId: "968578370974",
-
-  appId: "1:968578370974:web:fe3da577a5a9867b95da8f"
-
-};
-
-
-// Initialize Firebase
-
-const app = initializeApp(firebaseConfig);
+      apiKey: "AIzaSyBlUj-ccMBroycdzY6OUrG2ydn4y6fuSZ0",
+      authDomain: "lerntracker-21cb5.firebaseapp.com",
+      projectId: "lerntracker-21cb5",
+      storageBucket: "lerntracker-21cb5.firebasestorage.app",
+      messagingSenderId: "968578370974",
+      appId: "1:968578370974:web:0fa9996eb90606c895da8f"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Globale Exporte für script.js
     window.auth = auth;
     window.db = db;
     window.fbAuth = { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut };
     window.fbDb = { doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit };
   </script>
 
-  <!-- Hauptskript -->
   <script src="script.js"></script>
 </body>
 </html>
-     

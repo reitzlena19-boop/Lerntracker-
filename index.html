@@ -1,164 +1,98 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mein Lerntracker</title>
-  <!-- Google Fonts & FontAwesome Icons -->
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Verweist wieder korrekt auf style.css (ohne s) -->
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lerntracker</title>
+    <!-- Google Fonts: Outfit -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <div class="app-container">
+    <!-- Login / Registrierungs-Bereich -->
+    <div id="auth-container" class="auth-wrapper">
+        <div class="auth-card">
+            <h2>Willkommen beim Lerntracker 🐢</h2>
+            <p>Dein magischer Begleiter für den Lernerfolg.</p>
+            
+            <div class="auth-tabs">
+                <button id="tab-login" class="active" onclick="switchAuthTab('login')">Anmelden</button>
+                <button id="tab-register" onclick="switchAuthTab('register')">Registrieren</button>
+            </div>
 
-    <!-- LOGIN / REGISTRIERUNG SCREEN -->
-    <div id="authSection" class="auth-card">
-      <div class="auth-header">
-        <div class="auth-icon"><i class="fa-solid fa-dragon"></i></div>
-        <h2>Willkommen zurück!</h2>
-        <p>Melde dich an, um deinen Lernfortschritt zu begleiten.</p>
-      </div>
-      
-      <div class="form-group">
-        <label for="authEmail"><i class="fa-regular fa-envelope"></i> E-Mail Adresse</label>
-        <input type="email" id="authEmail" placeholder="deine@email.de">
-      </div>
-      
-      <div class="form-group">
-        <label for="authPassword"><i class="fa-solid fa-lock"></i> Passwort</label>
-        <input type="password" id="authPassword" placeholder="••••••••">
-      </div>
-      
-      <div class="form-group">
-        <label for="authUsername"><i class="fa-regular fa-user"></i> Benutzername (nur bei Registrierung)</label>
-        <input type="text" id="authUsername" placeholder="z.B. Alex">
-      </div>
-      
-      <div class="auth-buttons">
-        <button id="btnLogin" class="btn btn-primary"><i class="fa-solid fa-right-to-bracket"></i> Anmelden</button>
-        <button id="btnRegister" class="btn btn-secondary"><i class="fa-solid fa-user-plus"></i> Registrieren</button>
-      </div>
-      
-      <p id="authError" class="error-msg"></p>
+            <!-- Login Formular -->
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <input type="email" id="login-email" placeholder="E-Mail-Adresse" required>
+                <input type="password" id="login-password" placeholder="Passwort" required>
+                <button type="submit" class="btn-primary">Einloggen</button>
+            </form>
+
+            <!-- Registrierungs Formular -->
+            <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
+                <input type="text" id="reg-username" placeholder="Benutzername" required>
+                <input type="email" id="reg-email" placeholder="E-Mail-Adresse" required>
+                <input type="password" id="reg-password" placeholder="Passwort (min. 6 Zeichen)" required>
+                
+                <label for="reg-song">Lieblingslied:</label>
+                <input type="text" id="reg-song" placeholder="Dein Lieblingssong" required>
+
+                <label for="reg-teacher">Lieblingslehrer:</label>
+                <input type="text" id="reg-teacher" placeholder="Dein Lieblingslehrer" required>
+
+                <label for="reg-subject">Lieblingsfach:</label>
+                <input type="text" id="reg-subject" placeholder="Dein Lieblingsfach" required>
+
+                <button type="submit" class="btn-primary">Konto erstellen</button>
+            </form>
+        </div>
     </div>
 
-    <!-- DASHBOARD (Sichtbar nach Login) -->
-    <div id="dashboardSection" class="hidden">
-      
-      <!-- HEADER -->
-      <header class="main-header">
-        <div class="header-left">
-          <h1><i class="fa-solid fa-dragon header-logo"></i> Mein Lerntracker</h1>
-          
-          <!-- Navigation / Filter -->
-          <nav class="nav-menu">
-            <button class="nav-btn active" id="navAll"><i class="fa-solid fa-border-all"></i> Alle Bereiche</button>
-            <button class="nav-btn" id="navTodos"><i class="fa-solid fa-list-check"></i> To-Do-Liste</button>
-          </nav>
-        </div>
-        
-        <div class="user-info">
-          <span id="displayUsername"><i class="fa-regular fa-circle-user"></i> Hallo, Nutzer!</span>
-          <button id="btnLogout" class="btn btn-logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Abmelden</button>
-        </div>
-      </header>
+    <!-- Haupt-Dashboard -->
+    <div id="dashboard-container" class="dashboard-wrapper hidden">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>Lerntracker</h2>
+            </div>
+            
+            <div class="turtle-container">
+                <p class="turtle-speech">"Tschakka, du schaffst das!"</p>
+            </div>
 
-      <!-- DASHBOARD GRID -->
-      <div class="dashboard-grid">
+            <nav class="sidebar-nav">
+                <button onclick="switchSection('overview')" class="nav-btn active">📊 Dashboard</button>
+                <button onclick="switchSection('timer')" class="nav-btn">⏳ Lern-Timer</button>
+                <button onclick="switchSection('turtle')" class="nav-btn">🐢 Schildkröte</button>
+                <button onclick="switchSection('grades')" class="nav-btn">📈 Noten & Prüfungen</button>
+                <button onclick="switchSection('calendar')" class="nav-btn">📅 Kalender</button>
+                <button onclick="switchSection('todos')" class="nav-btn">📝 To-Do Liste</button>
+                <button onclick="switchSection('community')" class="nav-btn">🏆 Community</button>
+                <button onclick="switchSection('profile')" class="nav-btn">⚙️ Profil</button>
+            </nav>
 
-        <!-- LERNTIMER -->
-        <div class="card card-timer" id="cardTimer">
-          <h3><i class="fa-regular fa-clock icon-title"></i> Lerntimer</h3>
-          <div class="timer-display" id="timerDisplay">25:00</div>
-          <div class="timer-controls">
-            <button id="btnStartTimer" class="btn btn-accent"><i class="fa-solid fa-play"></i> Start</button>
-            <button id="btnPauseTimer" class="btn btn-secondary"><i class="fa-solid fa-pause"></i> Pause</button>
-            <button id="btnResetTimer" class="btn btn-secondary"><i class="fa-solid fa-rotate-left"></i> Reset</button>
-          </div>
-          <div class="subject-select-group">
-            <label for="subjectInput"><i class="fa-solid fa-book"></i> Lernfach / Thema:</label>
-            <input type="text" id="subjectInput" placeholder="z. B. Mathematik">
-          </div>
-        </div>
+            <div class="sidebar-footer">
+                <button onclick="handleLogout()" class="btn-logout">Abmelden</button>
+            </div>
+        </aside>
 
-        <!-- NOTENRECHNER -->
-        <div class="card card-grades" id="cardGrades">
-          <h3><i class="fa-solid fa-chart-line icon-title"></i> Fächer & Noten</h3>
-          <div class="grade-input-group">
-            <input type="text" id="newSubjectName" placeholder="Fachname">
-            <input type="number" id="newSubjectGrade" placeholder="Note" step="0.1" min="1" max="6">
-            <button id="btnAddSubject" class="btn btn-primary"><i class="fa-solid fa-plus"></i></button>
-          </div>
-          <div class="subject-list" id="subjectList"></div>
-          <div class="average-badge">
-            Notendurchschnitt: <span id="averageGrade">-</span>
-          </div>
-        </div>
+        <!-- Hauptinhalt des Dashboards -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1 id="section-title">Dashboard</h1>
+                <div class="user-greeting">
+                    Hallo, <span id="display-username">Lerner</span>! ✨
+                </div>
+            </header>
 
-        <!-- TO-DO-LISTE -->
-        <div class="card card-todos" id="cardTodos">
-          <h3><i class="fa-solid fa-list-check icon-title"></i> Meine To-Do-Liste</h3>
-          <div class="todo-input-group">
-            <input type="text" id="newTodoInput" placeholder="Neue Aufgabe eingeben...">
-            <button id="btnAddTodo" class="btn btn-primary"><i class="fa-solid fa-plus"></i></button>
-          </div>
-          <ul class="todo-list" id="todoList"></ul>
-        </div>
-
-        <!-- DRACHEN PET (Gamification) -->
-        <div class="card card-pet pet-container" id="cardPet">
-          <h3><i class="fa-solid fa-egg icon-title"></i> Drachen-Begleiter</h3>
-          <div class="pet-avatar" id="petAvatar">🥚</div>
-          <p class="pet-stage-title"><strong id="petStage">Drachen-Ei</strong></p>
-          <p class="pet-stats"><i class="fa-solid fa-stopwatch"></i> Gesamte Lernzeit: <span id="totalLearnTime">0</span> Min.</p>
-          <div class="progress-bar-bg">
-            <div class="progress-bar-fill" id="petProgress"></div>
-          </div>
-          <p class="pet-next-level">Nächstes Level in: <span id="nextLevelMinutes">30</span> Min.</p>
-        </div>
-
-        <!-- COMMUNITY RANKING (Realtime Cloud Sync) -->
-        <div class="card card-ranking" id="cardRanking">
-          <h3><i class="fa-solid fa-trophy icon-title"></i> Community Leaderboard</h3>
-          <ul class="ranking-list" id="rankingList">
-            <li class="ranking-item"><span><i class="fa-solid fa-spinner fa-spin"></i> Lade Ranking...</span></li>
-          </ul>
-        </div>
-
-      </div>
+            <!-- Dynamischer Inhaltsbereich -->
+            <div id="content-view">
+                <!-- Sektionen werden per JS geladen -->
+            </div>
+        </main>
     </div>
 
-  </div>
-
-  <!-- FIREBASE MODULE & CONFIGURATION -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyBlUj-ccMBroycdzY6OUrG2ydn4y6fuSZ0",
-      authDomain: "lerntracker-21cb5.firebaseapp.com",
-      projectId: "lerntracker-21cb5",
-      storageBucket: "lerntracker-21cb5.firebasestorage.app",
-      messagingSenderId: "968578370974",
-      appId: "1:968578370974:web:0fa9996eb90606c895da8f"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    window.auth = auth;
-    window.db = db;
-    window.fbAuth = { createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut };
-    window.fbDb = { doc, setDoc, getDoc, onSnapshot, collection, query, orderBy, limit };
-  </script>
-
-  <script src="script.js"></script>
+    <!-- Eigene Skripte -->
+    <script type="module" src="script.js"></script>
 </body>
 </html>

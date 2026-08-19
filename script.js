@@ -1,425 +1,553 @@
-// Globaler Anwendungsstatus
-let currentUser = null;
-let userProfile = {
-  username: "Anonym",
-  totalMinutes: 0,
-  subjects: [],
-  todos: []
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+// Deine Firebase Konfiguration
+const firebaseConfig = {
+    apiKey: "AIzaSyBnOdU2kbDwEd-pjQzCqtSEpveikZhg2zA",
+    authDomain: "lerntracker-5d78c.firebaseapp.com",
+    projectId: "lerntracker-5d78c",
+    storageBucket: "lerntracker-5d78c.firebasestorage.app",
+    messagingSenderId: "1046179377844",
+    appId: "1:1046179377844:web:df25b07667a94f0134dde1"
 };
 
-// Timer Variablen
+// Firebase initialisieren
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Globale Anwendungs-Daten
+let currentUser = localStorage.getItem('currentUser') || "";
+let totalStudyMinutes = 0;
+let examsList = [];
+let calendarEntries = [];
+let todosList = [];
+let communityUsers = [];
+
+let userSong = "-";
+let userTeacher = "-";
+let userSubject = "-";
+
+// Globale Timer-Variablen
 let timerInterval = null;
-let timerSeconds = 25 * 60;
-let isTimerRunning = false;
+let totalSeconds = 25 * 60;
+let remainingSeconds = 25 * 60;
+let isRunning = false;
 
-// DOM Elemente
-const authSection = document.getElementById('authSection');
-const dashboardSection = document.getElementById('dashboardSection');
-const authEmail = document.getElementById('authEmail');
-const authPassword = document.getElementById('authPassword');
-const authUsername = document.getElementById('authUsername');
-const btnLogin = document.getElementById('btnLogin');
-const btnRegister = document.getElementById('btnRegister');
-const btnLogout = document.getElementById('btnLogout');
-const authError = document.getElementById('authError');
-const displayUsername = document.getElementById('displayUsername');
+let currentCalendarYear = new Date().getFullYear();
+let currentCalendarMonth = new Date().getMonth();
 
-// Navigation
-const navAll = document.getElementById('navAll');
-const navTodos = document.getElementById('navTodos');
-const cardTimer = document.getElementById('cardTimer');
-const cardGrades = document.getElementById('cardGrades');
-const cardPet = document.getElementById('cardPet');
-const cardRanking = document.getElementById('cardRanking');
-const cardTodos = document.getElementById('cardTodos');
+// Daten in Firebase speichern
+async function saveData() {
+    if (!currentUser) return;
 
-// Timer Elemente
-const timerDisplay = document.getElementById('timerDisplay');
-const btnStartTimer = document.getElementById('btnStartTimer');
-const btnPauseTimer = document.getElementById('btnPauseTimer');
-const btnResetTimer = document.getElementById('btnResetTimer');
+    const userData = {
+        totalStudyMinutes: totalStudyMinutes,
+        examsList: examsList,
+        calendarEntries: calendarEntries,
+        todosList: todosList,
+        song: userSong,
+        teacher: userTeacher,
+        subject: userSubject
+    };
 
-// Pet Elemente
-const petAvatar = document.getElementById('petAvatar');
-const petStage = document.getElementById('petStage');
-const totalLearnTime = document.getElementById('totalLearnTime');
-const petProgress = document.getElementById('petProgress');
-const nextLevelMinutes = document.getElementById('nextLevelMinutes');
-
-// Ranking & Noten Elemente
-const rankingList = document.getElementById('rankingList');
-const newSubjectName = document.getElementById('newSubjectName');
-const newSubjectGrade = document.getElementById('newSubjectGrade');
-const btnAddSubject = document.getElementById('btnAddSubject');
-const subjectList = document.getElementById('subjectList');
-const averageGrade = document.getElementById('averageGrade');
-
-// To-Do Elemente
-const newTodoInput = document.getElementById('newTodoInput');
-const btnAddTodo = document.getElementById('btnAddTodo');
-const todoList = document.getElementById('todoList');
-
-// -------------------------------------------------------------
-// INITIALISIERUNG
-// -------------------------------------------------------------
-
-window.addEventListener('load', () => {
-  const checkFirebase = setInterval(() => {
-    if (window.auth && window.db) {
-      clearInterval(checkFirebase);
-      initApp();
+    try {
+        await setDoc(doc(db, "users", currentUser), userData);
+        
+        communityUsers = [{
+            username: currentUser,
+            studyMinutes: totalStudyMinutes,
+            song: userSong,
+            teacher: userTeacher,
+            subject: userSubject
+        }];
+    } catch (e) {
+        console.error("Fehler beim Speichern in Firebase: ", e);
     }
-  }, 100);
+}
+
+// Daten aus Firebase laden
+async function loadUserData(username) {
+    try {
+        const docRef = doc(db, "users", username);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            totalStudyMinutes = data.totalStudyMinutes || 0;
+            examsList = data.examsList || [];
+            calendarEntries = data.calendarEntries || [];
+            todosList = data.todosList || [];
+            userSong = data.song || "-";
+            userTeacher = data.teacher || "-";
+            userSubject = data.subject || "-";
+        } else {
+            totalStudyMinutes = 0;
+            examsList = [];
+            calendarEntries = [];
+            todosList = [];
+        }
+
+        communityUsers = [{
+            username: username,
+            studyMinutes: totalStudyMinutes,
+            song: userSong,
+            teacher: userTeacher,
+            subject: userSubject
+        }];
+    } catch (e) {
+        console.error("Fehler beim Laden aus Firebase: ", e);
+    }
+}
+
+// Umschalten zwischen Dashboard-Sektionen
+window.switchSection = function(sectionId) {
+    document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+    if (event && event.target) {
+        event.target.classList.add('active');
+    }
+
+    const titleEl = document.getElementById('section-title');
+    const contentView = document.getElementById('content-view');
+
+    if (sectionId === 'overview') {
+        titleEl.textContent = 'Dashboard';
+        
+        let dashboardTodosHtml = '<p>Keine offenen Aufgaben. Super! 🎉</p>';
+        if (todosList.length > 0) {
+            dashboardTodosHtml = `
+                <ul style="list-style: none; padding: 0; max-height: 150px; overflow-y: auto;">
+                    ${todosList.map((todo, index) => `
+                        <li style="display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid #f0e6ff;">
+                            <label style="display: flex; align-items: center; cursor: pointer; width: 100%; text-decoration: ${todo.done ? 'line-through' : 'none'}; color: ${todo.done ? '#888' : '#4a4a4a'};">
+                                <input type="checkbox" ${todo.done ? 'checked' : ''} onclick="toggleTodoFromDashboard(${index})" style="margin-right: 8px;"> 
+                                ${todo.text}
+                            </label>
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+        }
+
+        contentView.innerHTML = `
+            <div class="dashboard-grid">
+                <div class="card timer-quick-card">
+                    <h3>⏳ Lern-Timer Schnellzugriff</h3>
+                    <div class="mini-timer-display" id="mini-timer-display">25:00</div>
+                    <div class="mini-timer-controls">
+                        <button onclick="startMiniTimer()" class="btn-sm">Start</button>
+                        <button onclick="pauseMiniTimer()" class="btn-sm">Pause</button>
+                        <button onclick="resetMiniTimer()" class="btn-sm">Reset</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>📊 Lernfortschritt</h3>
+                    <p>Gesamte Lernzeit: <strong><span id="total-study-time-display">${totalStudyMinutes}</span> Minuten</strong></p>
+                    <p>Tschakka! Mach weiter so! 🐢✨</p>
+                </div>
+
+                <div class="card" style="grid-column: span 2;">
+                    <h3>📝 Anstehende Aufgaben</h3>
+                    ${dashboardTodosHtml}
+                </div>
+            </div>
+        `;
+        updateMiniTimerDisplay();
+    } else if (sectionId === 'timer') {
+        titleEl.textContent = 'Lern-Timer';
+        let examOptionsHtml = examsList.map(e => `<option value="${e.subject} (${e.type})">${e.subject} - ${e.type}</option>`).join('');
+        if (examsList.length === 0) examOptionsHtml = `<option value="Allgemein">Keine Prüfungen eingetragen</option>`;
+
+        contentView.innerHTML = `
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <h3>Vollständiger Lern-Timer</h3>
+                <div class="timer-config">
+                    <label>Lernzeit einstellen:</label>
+                    <select id="timer-duration-select" onchange="changeTimerDuration()">
+                        <option value="15">15 Minuten</option>
+                        <option value="25" selected>25 Minuten (Pomodoro)</option>
+                        <option value="45">45 Minuten</option>
+                        <option value="60">60 Minuten</option>
+                    </select>
+                    <label>Für welche Prüfung lernst du?</label>
+                    <select id="timer-exam-select">${examOptionsHtml}</select>
+                </div>
+                <div class="timer-big-display" id="big-timer-display">25:00</div>
+                <div class="mini-timer-controls">
+                    <button onclick="startBigTimer()" class="btn-primary">Start</button>
+                    <button onclick="pauseBigTimer()" class="btn-sm">Pause</button>
+                    <button onclick="resetBigTimer()" class="btn-sm">Reset</button>
+                </div>
+            </div>
+        `;
+        updateBigTimerDisplay();
+    } else if (sectionId === 'turtle') {
+        titleEl.textContent = 'Deine Lern-Schildkröte';
+        let turtleStageImg = "🥚";
+        let turtleStageTitle = "Schildkröten-Ei";
+        let turtleDescription = "Dein Ei ist noch ganz warm. Lerne mindestens 60 Minuten, damit die Schildkröte schlüpft!";
+        let progressPercent = Math.min(100, Math.floor((totalStudyMinutes / 180) * 100));
+
+        if (totalStudyMinutes >= 180) {
+            turtleStageImg = "🐢✨";
+            turtleStageTitle = "Grosse Lern-Schildkröte";
+            turtleDescription = "Wahnsinn! Deine Schildkröte ist voll ausgewachsen und begleitet dich stolz durch all deine Prüfungen!";
+        } else if (totalStudyMinutes >= 60) {
+            turtleStageImg = "🐢";
+            turtleStageTitle = "Schlüpfte Baby-Schildkröte";
+            turtleDescription = "Herzlichen Glückwunsch! Das Ei ist aufgegangen. Deine Baby-Schildkröte wächst mit jeder gelernten Minute weiter!";
+        }
+
+        contentView.innerHTML = `
+            <div class="card" style="max-width: 600px; margin: 0 auto; text-align: center;">
+                <h3>Evolutions-Status</h3>
+                <div style="font-size: 5rem; margin: 20px 0;">${turtleStageImg}</div>
+                <h2 style="color: #6b5b95;">${turtleStageTitle}</h2>
+                <p style="margin-bottom: 20px;">${turtleDescription}</p>
+                <div style="background: #f7f3ff; border: 1px solid #e6d7ff; padding: 15px; border-radius: 8px; text-align: left;">
+                    <p style="margin: 0 0 5px 0;"><strong>Aktuelle Lernzeit:</strong> ${totalStudyMinutes} Minuten</p>
+                    <p style="margin: 0 0 10px 0;"><strong>Nächster Meilenstein:</strong> ${totalStudyMinutes < 60 ? '60 Min. (Schlüpfen)' : (totalStudyMinutes < 180 ? '180 Min. (Volle Größe)' : 'Maximum erreicht! 🎉')}</p>
+                    <div style="background: #e6d7ff; border-radius: 5px; height: 12px; width: 100%; overflow: hidden;">
+                        <div style="background: #6b5b95; height: 100%; width: ${progressPercent}%; transition: width 0.4s ease;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (sectionId === 'grades') {
+        titleEl.textContent = 'Noten & Prüfungen';
+        contentView.innerHTML = `
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>Deine Prüfungen</h3>
+                    ${examsList.length === 0 ? '<p>Noch keine Prüfungen eingetragen.</p>' : `
+                        <ul style="list-style: none; padding: 0;">
+                            ${examsList.map((e, index) => `
+                                <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e6d7ff;">
+                                    <span><strong>${e.subject}</strong> (${e.type})</span>
+                                    <button onclick="deleteExam(${index})" class="btn-sm" style="background-color: #ffcccc;">Löschen</button>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    `}
+                </div>
+                <div class="card">
+                    <h3>Prüfung hinzufügen</h3>
+                    <form onsubmit="handleAddExam(event)">
+                        <label>Fach:</label>
+                        <input type="text" id="exam-subject-input" placeholder="z.B. Mathematik" required>
+                        <label>Art der Prüfung:</label>
+                        <input type="text" id="exam-type-input" placeholder="z.B. Klausur / Test" required>
+                        <button type="submit" class="btn-primary" style="margin-top: 10px;">Hinzufügen</button>
+                    </form>
+                </div>
+            </div>
+        `;
+    } else if (sectionId === 'calendar') {
+        const monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"];
+        titleEl.textContent = `Kalender (${monthNames[currentCalendarMonth]} ${currentCalendarYear})`;
+        const firstDayIndex = (new Date(currentCalendarYear, currentCalendarMonth, 1).getDay() + 6) % 7;
+        const totalDays = new Date(currentCalendarYear, currentCalendarMonth + 1, 0).getDate();
+        const now = new Date();
+        const isCurrentMonth = (now.getFullYear() === currentCalendarYear && now.getMonth() === currentCalendarMonth);
+        const todayDate = now.getDate();
+
+        let daysHtml = `<div class="calendar-day-header">Mo</div><div class="calendar-day-header">Di</div><div class="calendar-day-header">Mi</div><div class="calendar-day-header">Do</div><div class="calendar-day-header">Fr</div><div class="calendar-day-header">Sa</div><div class="calendar-day-header">So</div>`;
+        for (let i = 0; i < firstDayIndex; i++) daysHtml += `<div class="calendar-day" style="opacity: 0.3;"></div>`;
+        for (let i = 1; i <= totalDays; i++) {
+            let entriesForDay = calendarEntries.filter(entry => entry.year == currentCalendarYear && entry.month == currentCalendarMonth && entry.day == i);
+            let entryHtml = entriesForDay.map(en => `<br><small style="color:#6b5b95;">• ${en.title}</small>`).join('');
+            let isToday = (isCurrentMonth && i === todayDate) ? 'today' : '';
+            daysHtml += `<div class="calendar-day ${isToday}"><strong>${i}</strong>${entryHtml}</div>`;
+        }
+
+        contentView.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <button onclick="changeMonth(-1)" class="btn-sm">◀ Vorheriger Monat</button>
+                <h3 style="margin: 0; color: #6b5b95;">${monthNames[currentCalendarMonth]} ${currentCalendarYear}</h3>
+                <button onclick="changeMonth(1)" class="btn-sm">Nächster Monat ▶</button>
+            </div>
+            <div class="calendar-layout">
+                <div class="card"><div class="calendar-grid">${daysHtml}</div></div>
+                <div class="card">
+                    <h3>Eintrag hinzufügen</h3>
+                    <form onsubmit="handleAddCalendarEntry(event)">
+                        <label>Typ:</label>
+                        <select id="cal-entry-type" onchange="toggleEntryFields()">
+                            <option value="exam">Prüfung</option>
+                            <option value="appointment">Termin</option>
+                        </select>
+                        <label>Tag im Monat (1-${totalDays}):</label>
+                        <input type="number" id="cal-day" min="1" max="${totalDays}" required>
+                        <div id="exam-fields">
+                            <label>Fach:</label><input type="text" id="cal-exam-subject" placeholder="z.B. Biologie">
+                            <label>Art der Prüfung:</label><input type="text" id="cal-exam-type" placeholder="z.B. Test / Klausur">
+                        </div>
+                        <div id="appointment-fields" class="hidden">
+                            <label>Terminbeschreibung:</label><input type="text" id="cal-appointment-desc" placeholder="z.B. Lerngruppe treffen">
+                        </div>
+                        <button type="submit" class="btn-primary" style="margin-top: 10px;">Hinzufügen</button>
+                    </form>
+                </div>
+            </div>
+        `;
+    } else if (sectionId === 'todos') {
+        titleEl.textContent = 'To-Do Liste';
+        contentView.innerHTML = `
+            <div class="card" style="max-width: 600px; margin: 0 auto;">
+                <h3>Deine Aufgaben</h3>
+                <form onsubmit="handleAddTodo(event)" style="margin-bottom: 20px;">
+                    <input type="text" id="new-todo-text" placeholder="Neue Aufgabe eingeben..." required>
+                    <button type="submit" class="btn-primary" style="margin-top: 5px;">Hinzufügen</button>
+                </form>
+                <ul style="list-style: none; padding: 0;">
+                    ${todosList.map((todo, index) => `
+                        <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e6d7ff;">
+                            <span style="text-decoration: ${todo.done ? 'line-through' : 'none'}; color: ${todo.done ? '#888' : '#4a4a4a'};">
+                                <input type="checkbox" ${todo.done ? 'checked' : ''} onclick="toggleTodo(${index})"> ${todo.text}
+                            </span>
+                            <button onclick="deleteTodo(${index})" class="btn-sm" style="background-color: #ffcccc;">Löschen</button>
+                        </li>
+                    `).join('')}
+                </ul>
+            </div>
+        `;
+    } else if (sectionId === 'community') {
+        titleEl.textContent = 'Community & Rankings';
+        let sortedRanking = [...communityUsers].sort((a, b) => b.studyMinutes - a.studyMinutes);
+
+        contentView.innerHTML = `
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3>🏆 Lernzeit-Bestenliste</h3>
+                    <ol style="padding-left: 20px;">
+                        ${sortedRanking.map(u => `<li><strong>${u.username}</strong>: ${u.studyMinutes} Minuten</li>`).join('')}
+                    </ol>
+                </div>
+                <div class="card">
+                    <h3>✨ Anonyme Community-Favoriten</h3>
+                    <p>Beliebtestes Lieblingslied: <strong>${userSong}</strong></p>
+                    <p>Beliebtester Lieblingslehrer: <strong>${userTeacher}</strong></p>
+                    <p>Beliebtestes Lieblingsfach: <strong>${userSubject}</strong></p>
+                </div>
+            </div>
+        `;
+    } else if (sectionId === 'profile') {
+        titleEl.textContent = 'Profil';
+        contentView.innerHTML = `
+            <div class="card" style="max-width: 500px; margin: 0 auto;">
+                <h3>Benutzerprofil</h3>
+                <p>Eingeloggt als: <strong>${currentUser}</strong></p>
+                <p>Lieblingslied: <strong>${userSong}</strong></p>
+                <p>Lieblingslehrer: <strong>${userTeacher}</strong></p>
+                <p>Lieblingsfach: <strong>${userSubject}</strong></p>
+                <p>Gesamtlernzeit: <strong>${totalStudyMinutes} Minuten</strong></p>
+            </div>
+        `;
+    }
+};
+
+window.changeMonth = function(direction) {
+    currentCalendarMonth += direction;
+    if (currentCalendarMonth > 11) { currentCalendarMonth = 0; currentCalendarYear++; }
+    else if (currentCalendarMonth < 0) { currentCalendarMonth = 11; currentCalendarYear--; }
+    switchSection('calendar');
+};
+
+window.handleAddExam = function(event) {
+    event.preventDefault();
+    const subject = document.getElementById('exam-subject-input').value;
+    const type = document.getElementById('exam-type-input').value;
+    examsList.push({ subject, type });
+    saveData();
+    switchSection('grades');
+};
+
+window.deleteExam = function(index) {
+    examsList.splice(index, 1);
+    saveData();
+    switchSection('grades');
+};
+
+function updateMiniTimerDisplay() {
+    const displayEl = document.getElementById('mini-timer-display');
+    if (!displayEl) return;
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    displayEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+window.startMiniTimer = function() {
+    if (isRunning) return;
+    isRunning = true;
+    timerInterval = setInterval(() => {
+        if (remainingSeconds > 0) {
+            remainingSeconds--;
+            updateMiniTimerDisplay();
+        } else {
+            clearInterval(timerInterval);
+            isRunning = false;
+            addStudyTime(Math.floor(totalSeconds / 60));
+            alert("Lerneinheit beendet! Gut gemacht! 🎉 Deine Schildkröte freut sich!");
+        }
+    }, 1000);
+};
+
+window.pauseMiniTimer = function() { clearInterval(timerInterval); isRunning = false; };
+window.resetMiniTimer = function() { clearInterval(timerInterval); isRunning = false; remainingSeconds = totalSeconds; updateMiniTimerDisplay(); };
+
+window.changeTimerDuration = function() {
+    const select = document.getElementById('timer-duration-select');
+    const mins = parseInt(select.value);
+    totalSeconds = mins * 60;
+    remainingSeconds = totalSeconds;
+    updateBigTimerDisplay();
+};
+
+function updateBigTimerDisplay() {
+    const displayEl = document.getElementById('big-timer-display');
+    if (!displayEl) return;
+    const minutes = Math.floor(remainingSeconds / 60);
+    const seconds = remainingSeconds % 60;
+    displayEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+window.startBigTimer = function() {
+    if (isRunning) return;
+    isRunning = true;
+    timerInterval = setInterval(() => {
+        if (remainingSeconds > 0) {
+            remainingSeconds--;
+            updateBigTimerDisplay();
+        } else {
+            clearInterval(timerInterval);
+            isRunning = false;
+            let learnedMins = Math.floor(totalSeconds / 60);
+            addStudyTime(learnedMins);
+            alert(`Lerneinheit erfolgreich beendet! +${learnedMins} Minuten Gesamtlernzeit. 🐢✨`);
+        }
+    }, 1000);
+};
+
+window.pauseBigTimer = function() { clearInterval(timerInterval); isRunning = false; };
+window.resetBigTimer = function() { clearInterval(timerInterval); isRunning = false; remainingSeconds = totalSeconds; updateBigTimerDisplay(); };
+
+function addStudyTime(mins) {
+    let oldMinutes = totalStudyMinutes;
+    totalStudyMinutes += mins;
+    saveData();
+    
+    if (oldMinutes < 60 && totalStudyMinutes >= 60) {
+        alert("🥚 Krack! Deine Schildkröte ist aus dem Ei geschlüpft! Schau im Schildkröten-Menü nach!");
+    }
+
+    const timeDisplay = document.getElementById('total-study-time-display');
+    if (timeDisplay) timeDisplay.textContent = totalStudyMinutes;
+}
+
+window.handleAddTodo = function(event) {
+    event.preventDefault();
+    const text = document.getElementById('new-todo-text').value;
+    todosList.push({ text, done: false });
+    saveData();
+    switchSection('todos');
+};
+
+window.toggleTodo = function(index) { todosList[index].done = !todosList[index].done; saveData(); };
+window.toggleTodoFromDashboard = function(index) { todosList[index].done = !todosList[index].done; saveData(); switchSection('overview'); };
+window.deleteTodo = function(index) { todosList.splice(index, 1); saveData(); switchSection('todos'); };
+
+window.toggleEntryFields = function() {
+    const type = document.getElementById('cal-entry-type').value;
+    const examFields = document.getElementById('exam-fields');
+    const appointmentFields = document.getElementById('appointment-fields');
+    if (type === 'exam') { examFields.classList.remove('hidden'); appointmentFields.classList.add('hidden'); }
+    else { examFields.classList.add('hidden'); appointmentFields.classList.remove('hidden'); }
+};
+
+window.handleAddCalendarEntry = function(event) {
+    event.preventDefault();
+    const type = document.getElementById('cal-entry-type').value;
+    const day = document.getElementById('cal-day').value;
+    
+    if (type === 'exam') {
+        const subject = document.getElementById('cal-exam-subject').value;
+        const examType = document.getElementById('cal-exam-type').value;
+        examsList.push({ subject, type: examType });
+        calendarEntries.push({ year: currentCalendarYear, month: currentCalendarMonth, day, title: `${subject} (${examType})` });
+    } else {
+        const desc = document.getElementById('cal-appointment-desc').value;
+        calendarEntries.push({ year: currentCalendarYear, month: currentCalendarMonth, day, title: desc });
+    }
+
+    saveData();
+    alert('Erfolgreich hinzugefügt!');
+    switchSection('calendar');
+};
+
+window.switchAuthTab = function(tab) {
+    const loginForm = document.getElementById('login-form');
+    const registerForm = document.getElementById('register-form');
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
+
+    if (tab === 'login') {
+        loginForm.classList.remove('hidden'); registerForm.classList.add('hidden');
+        tabLogin.classList.add('active'); tabRegister.classList.remove('active');
+    } else {
+        loginForm.classList.add('hidden'); registerForm.classList.remove('hidden');
+        tabLogin.classList.remove('active'); tabRegister.classList.add('active');
+    }
+};
+
+window.handleLogin = async function(event) {
+    event.preventDefault();
+    const email = document.getElementById('login-email').value;
+    currentUser = email.split('@')[0];
+    currentUser = currentUser.charAt(0).toUpperCase() + currentUser.slice(1);
+
+    await loadUserData(currentUser);
+
+    localStorage.setItem('currentUser', currentUser);
+    document.getElementById('display-username').textContent = currentUser;
+    document.getElementById('auth-container').classList.add('hidden');
+    document.getElementById('dashboard-container').classList.remove('hidden');
+    switchSection('overview');
+};
+
+window.handleRegister = async function(event) {
+    event.preventDefault();
+    const username = document.getElementById('reg-username').value;
+    userSong = document.getElementById('reg-song').value;
+    userTeacher = document.getElementById('reg-teacher').value;
+    userSubject = document.getElementById('reg-subject').value;
+    
+    currentUser = username;
+    totalStudyMinutes = 0;
+    examsList = [];
+    calendarEntries = [];
+    todosList = [];
+
+    await saveData();
+
+    alert('Registrierung erfolgreich! Du kannst dich jetzt einloggen.');
+    switchAuthTab('login');
+};
+
+window.handleLogout = function() {
+    currentUser = "";
+    localStorage.removeItem('currentUser');
+    document.getElementById('dashboard-container').classList.add('hidden');
+    document.getElementById('auth-container').classList.remove('hidden');
+};
+
+window.addEventListener('DOMContentLoaded', async () => {
+    if (localStorage.getItem('currentUser')) {
+        currentUser = localStorage.getItem('currentUser');
+        await loadUserData(currentUser);
+
+        document.getElementById('display-username').textContent = currentUser;
+        document.getElementById('auth-container').classList.add('hidden');
+        document.getElementById('dashboard-container').classList.remove('hidden');
+        switchSection('overview');
+    }
 });
-
-function initApp() {
-  const { onAuthStateChanged } = window.fbAuth;
-
-  onAuthStateChanged(window.auth, (user) => {
-    if (user) {
-      currentUser = user;
-      authSection.classList.add('hidden');
-      dashboardSection.classList.remove('hidden');
-      loadUserData(user.uid);
-      listenToLeaderboard();
-    } else {
-      currentUser = null;
-      authSection.classList.remove('hidden');
-      dashboardSection.classList.add('hidden');
-    }
-  });
-
-  // Auth Events
-  btnLogin.addEventListener('click', handleLogin);
-  btnRegister.addEventListener('click', handleRegister);
-  btnLogout.addEventListener('click', () => window.fbAuth.signOut(window.auth));
-
-  // Timer Events
-  btnStartTimer.addEventListener('click', startTimer);
-  btnPauseTimer.addEventListener('click', pauseTimer);
-  btnResetTimer.addEventListener('click', resetTimer);
-
-  // Noten Events
-  btnAddSubject.addEventListener('click', addSubject);
-
-  // To-Do Events
-  btnAddTodo.addEventListener('click', addTodo);
-
-  // Navigation Events
-  navAll.addEventListener('click', () => filterView('all'));
-  navTodos.addEventListener('click', () => filterView('todos'));
-}
-
-// -------------------------------------------------------------
-// NAVIGATION FILTER
-// -------------------------------------------------------------
-
-function filterView(view) {
-  if (view === 'todos') {
-    navAll.classList.remove('active');
-    navTodos.classList.add('active');
-    cardTimer.classList.add('hidden');
-    cardGrades.classList.add('hidden');
-    cardPet.classList.add('hidden');
-    cardRanking.classList.add('hidden');
-    cardTodos.classList.remove('hidden');
-  } else {
-    navTodos.classList.remove('active');
-    navAll.classList.add('active');
-    cardTimer.classList.remove('hidden');
-    cardGrades.classList.remove('hidden');
-    cardPet.classList.remove('hidden');
-    cardRanking.classList.remove('hidden');
-    cardTodos.classList.remove('hidden');
-  }
-}
-
-// -------------------------------------------------------------
-// AUTH HANDLER
-// -------------------------------------------------------------
-
-async function handleLogin() {
-  authError.textContent = '';
-  const email = authEmail.value.trim();
-  const password = authPassword.value;
-
-  if (!email || !password) {
-    authError.textContent = 'Bitte E-Mail und Passwort eingeben.';
-    return;
-  }
-
-  try {
-    await window.fbAuth.signInWithEmailAndPassword(window.auth, email, password);
-  } catch (err) {
-    authError.textContent = 'Fehler beim Anmelden: ' + err.message;
-  }
-}
-
-async function handleRegister() {
-  authError.textContent = '';
-  const email = authEmail.value.trim();
-  const password = authPassword.value;
-  const username = authUsername.value.trim() || 'Lerner';
-
-  if (!email || !password) {
-    authError.textContent = 'Bitte E-Mail und Passwort eingeben.';
-    return;
-  }
-
-  try {
-    const cred = await window.fbAuth.createUserWithEmailAndPassword(window.auth, email, password);
-    await window.fbDb.setDoc(window.fbDb.doc(window.db, 'users', cred.user.uid), {
-      username: username,
-      totalMinutes: 0,
-      subjects: [],
-      todos: []
-    });
-  } catch (err) {
-    authError.textContent = 'Fehler beim Registrieren: ' + err.message;
-  }
-}
-
-// -------------------------------------------------------------
-// CLOUD SYNC & REALTIME UPDATES
-// -------------------------------------------------------------
-
-async function loadUserData(uid) {
-  const userDocRef = window.fbDb.doc(window.db, 'users', uid);
-  const docSnap = await window.fbDb.getDoc(userDocRef);
-
-  if (docSnap.exists()) {
-    userProfile = { todos: [], subjects: [], ...docSnap.data() };
-  } else {
-    userProfile = { username: "Lerner", totalMinutes: 0, subjects: [], todos: [] };
-  }
-
-  displayUsername.innerHTML = `<i class="fa-regular fa-circle-user"></i> Hallo, ${escapeHtml(userProfile.username)}!`;
-  updatePetUI();
-  renderSubjects();
-  renderTodos();
-}
-
-async function saveUserData() {
-  if (!currentUser) return;
-  const userDocRef = window.fbDb.doc(window.db, 'users', currentUser.uid);
-  await window.fbDb.setDoc(userDocRef, userProfile, { merge: true });
-}
-
-function listenToLeaderboard() {
-  const { collection, query, orderBy, limit, onSnapshot } = window.fbDb;
-  const q = query(collection(window.db, 'users'), orderBy('totalMinutes', 'desc'), limit(10));
-
-  onSnapshot(q, (snapshot) => {
-    rankingList.innerHTML = '';
-    let rank = 1;
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      const li = document.createElement('li');
-      li.className = 'ranking-item';
-      li.innerHTML = `<span>#${rank} ${escapeHtml(data.username || 'Anonym')}</span> <span><strong>${data.totalMinutes || 0}</strong> Min</span>`;
-      rankingList.appendChild(li);
-      rank++;
-    });
-  });
-}
-
-// -------------------------------------------------------------
-// TO-DO LOGIK
-// -------------------------------------------------------------
-
-function addTodo() {
-  const text = newTodoInput.value.trim();
-  if (!text) return;
-
-  if (!userProfile.todos) userProfile.todos = [];
-  userProfile.todos.push({ text, completed: false });
-
-  newTodoInput.value = '';
-  renderTodos();
-  saveUserData();
-}
-
-function toggleTodo(index) {
-  if (userProfile.todos && userProfile.todos[index]) {
-    userProfile.todos[index].completed = !userProfile.todos[index].completed;
-    renderTodos();
-    saveUserData();
-  }
-}
-
-function removeTodo(index) {
-  if (userProfile.todos) {
-    userProfile.todos.splice(index, 1);
-    renderTodos();
-    saveUserData();
-  }
-}
-
-function renderTodos() {
-  todoList.innerHTML = '';
-  const todos = userProfile.todos || [];
-
-  if (todos.length === 0) {
-    todoList.innerHTML = '<p style="font-size:0.85em; color:#888; text-align:center; padding:10px;">Keine offenen Aufgaben!</p>';
-    return;
-  }
-
-  todos.forEach((todo, idx) => {
-    const li = document.createElement('li');
-    li.className = `todo-item ${todo.completed ? 'completed' : ''}`;
-    li.innerHTML = `
-      <span>${escapeHtml(todo.text)}</span>
-      <div class="todo-actions">
-        <button class="btn btn-secondary btn-icon" style="background:#55efc4; color:#fff;" onclick="toggleTodo(${idx})"><i class="fa-solid fa-check"></i></button>
-        <button class="btn btn-secondary btn-icon" style="background:#ff7675; color:#fff;" onclick="removeTodo(${idx})"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-    `;
-    todoList.appendChild(li);
-  });
-}
-
-window.toggleTodo = toggleTodo;
-window.removeTodo = removeTodo;
-
-// -------------------------------------------------------------
-// DRACHEN PET GAMIFICATION LOGIK
-// -------------------------------------------------------------
-
-function updatePetUI() {
-  const mins = userProfile.totalMinutes || 0;
-  totalLearnTime.textContent = mins;
-
-  let avatar = '🥚';
-  let stage = 'Drachen-Ei';
-  let nextGoal = 30;
-  let progressPct = 0;
-
-  if (mins < 30) {
-    avatar = '🥚';
-    stage = 'Drachen-Ei';
-    nextGoal = 30;
-    progressPct = (mins / 30) * 100;
-  } else if (mins < 120) {
-    avatar = '🐣';
-    stage = 'Baby-Drache';
-    nextGoal = 120;
-    progressPct = ((mins - 30) / (120 - 30)) * 100;
-  } else if (mins < 300) {
-    avatar = '🐉';
-    stage = 'Jungdrache';
-    nextGoal = 300;
-    progressPct = ((mins - 120) / (300 - 120)) * 100;
-  } else {
-    avatar = '🔥🐉🔥';
-    stage = 'Legendärer Drache';
-    nextGoal = mins;
-    progressPct = 100;
-  }
-
-  petAvatar.textContent = avatar;
-  petStage.textContent = stage;
-  petProgress.style.width = `${Math.min(progressPct, 100)}%`;
-  nextLevelMinutes.textContent = Math.max(0, nextGoal - mins);
-}
-
-// -------------------------------------------------------------
-// TIMER LOGIK
-// -------------------------------------------------------------
-
-function startTimer() {
-  if (isTimerRunning) return;
-  isTimerRunning = true;
-
-  timerInterval = setInterval(() => {
-    if (timerSeconds > 0) {
-      timerSeconds--;
-      updateTimerDisplay();
-    } else {
-      pauseTimer();
-      alert('Klasse gemacht! Deine Lerneinheit ist abgeschlossen (+25 Min).');
-      userProfile.totalMinutes = (userProfile.totalMinutes || 0) + 25;
-      updatePetUI();
-      saveUserData();
-      resetTimer();
-    }
-  }, 1000);
-}
-
-function pauseTimer() {
-  clearInterval(timerInterval);
-  isTimerRunning = false;
-}
-
-function resetTimer() {
-  pauseTimer();
-  timerSeconds = 25 * 60;
-  updateTimerDisplay();
-}
-
-function updateTimerDisplay() {
-  const m = Math.floor(timerSeconds / 60);
-  const s = timerSeconds % 60;
-  timerDisplay.textContent = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
-}
-
-// -------------------------------------------------------------
-// NOTENRECHNER LOGIK
-// -------------------------------------------------------------
-
-function addSubject() {
-  const name = newSubjectName.value.trim();
-  const grade = parseFloat(newSubjectGrade.value);
-
-  if (!name || isNaN(grade) || grade < 1 || grade > 6) {
-    alert('Bitte gib einen gültigen Fachnamen und eine Note zwischen 1.0 und 6.0 ein.');
-    return;
-  }
-
-  if (!userProfile.subjects) userProfile.subjects = [];
-  userProfile.subjects.push({ name, grade });
-
-  newSubjectName.value = '';
-  newSubjectGrade.value = '';
-
-  renderSubjects();
-  saveUserData();
-}
-
-function removeSubject(index) {
-  userProfile.subjects.splice(index, 1);
-  renderSubjects();
-  saveUserData();
-}
-
-function renderSubjects() {
-  subjectList.innerHTML = '';
-  const subjects = userProfile.subjects || [];
-
-  if (subjects.length === 0) {
-    subjectList.innerHTML = '<p style="font-size:0.85em; color:#888; text-align:center; padding:10px;">Noch keine Fächer eingetragen.</p>';
-    averageGrade.textContent = '-';
-    return;
-  }
-
-  let totalGrade = 0;
-
-  subjects.forEach((subj, idx) => {
-    totalGrade += subj.grade;
-    const item = document.createElement('div');
-    item.className = 'subject-item';
-    item.innerHTML = `
-      <span><strong>${escapeHtml(subj.name)}</strong>: Note ${subj.grade.toFixed(1)}</span>
-      <button class="btn btn-secondary btn-icon" style="background:#ff7675; color:#fff;" onclick="removeSubject(${idx})"><i class="fa-solid fa-trash"></i></button>
-    `;
-    subjectList.appendChild(item);
-  });
-
-  const avg = totalGrade / subjects.length;
-  averageGrade.textContent = avg.toFixed(2);
-}
-
-window.removeSubject = removeSubject;
-
-function escapeHtml(str) {
-  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}

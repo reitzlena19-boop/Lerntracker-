@@ -3,96 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lerntracker</title>
-    <!-- Google Fonts: Outfit -->
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Meine Lernplattform</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <!-- Login / Registrierungs-Bereich -->
-    <div id="auth-container" class="auth-wrapper">
-        <div class="auth-card">
-            <h2>Willkommen beim Lerntracker 🐢</h2>
-            <p>Dein magischer Begleiter für den Lernerfolg.</p>
-            
-            <div class="auth-tabs">
-                <button id="tab-login" class="active" onclick="switchAuthTab('login')">Anmelden</button>
-                <button id="tab-register" onclick="switchAuthTab('register')">Registrieren</button>
-            </div>
+    <nav>
+        <h2>Menü</h2>
+        <ul>
+            <li onclick="showPage('Startseite')">Startseite</li>
+            <li onclick="showPage('Lerntimer')">Lerntimer</li>
+            <li onclick="showPage('Aufgaben')">Aufgaben</li>
+            <li onclick="showPage('Melden')">Melden</li>
+            <li onclick="showPage('Lernzeit')">Lernzeit</li>
+            <li onclick="showPage('Lernkarten')">Lernkarten</li>
+            <li onclick="showPage('Noten & Prüfungen')">Noten & Prüfungen</li>
+            <li onclick="showPage('Kalender')">Kalender</li>
+            <li onclick="showPage('Notenprognose')">Notenprognose</li>
+        </ul>
+    </nav>
 
-            <!-- Login Formular -->
-            <form id="login-form" onsubmit="handleLogin(event)">
-                <input type="email" id="login-email" placeholder="E-Mail-Adresse" required>
-                <input type="password" id="login-password" placeholder="Passwort" required>
-                <button type="submit" class="btn-primary">Einloggen</button>
-            </form>
+    <main>
+        <header>
+            <h1 id="page-title">Startseite</h1>
+        </header>
+        <section id="content">
+            <!-- Inhalt wird dynamisch geladen -->
+        </section>
+    </main>
 
-            <!-- Registrierungs Formular -->
-            <form id="register-form" class="hidden" onsubmit="handleRegister(event)">
-                <input type="text" id="reg-username" placeholder="Benutzername" required>
-                <input type="email" id="reg-email" placeholder="E-Mail-Adresse" required>
-                <input type="password" id="reg-password" placeholder="Passwort (min. 6 Zeichen)" required>
-                
-                <label for="reg-song">Lieblingslied:</label>
-                <input type="text" id="reg-song" placeholder="Dein Lieblingssong" required>
-
-                <label for="reg-teacher">Lieblingslehrer:</label>
-                <input type="text" id="reg-teacher" placeholder="Dein Lieblingslehrer" required>
-
-                <label for="reg-subject">Lieblingsfach:</label>
-                <input type="text" id="reg-subject" placeholder="Dein Lieblingsfach" required>
-
-                <button type="submit" class="btn-primary">Konto erstellen</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Haupt-Dashboard -->
-    <div id="dashboard-container" class="dashboard-wrapper hidden">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>Lerntracker</h2>
-            </div>
-            
-            <div class="turtle-container">
-                <p class="turtle-speech">"Tschakka, du schaffst das!"</p>
-            </div>
-
-            <nav class="sidebar-nav">
-                <button onclick="switchSection('overview')" class="nav-btn active">📊 Dashboard</button>
-                <button onclick="switchSection('timer')" class="nav-btn">⏳ Lern-Timer</button>
-                <button onclick="switchSection('turtle')" class="nav-btn">🐢 Schildkröte</button>
-                <button onclick="switchSection('grades')" class="nav-btn">📈 Noten & Prüfungen</button>
-                <button onclick="switchSection('calendar')" class="nav-btn">📅 Kalender</button>
-                <button onclick="switchSection('todos')" class="nav-btn">📝 To-Do Liste</button>
-                <button onclick="switchSection('community')" class="nav-btn">🏆 Community</button>
-                <button onclick="switchSection('profile')" class="nav-btn">⚙️ Profil</button>
-            </nav>
-
-            <div class="sidebar-footer">
-                <button onclick="handleLogout()" class="btn-logout">Abmelden</button>
-            </div>
-        </aside>
-
-        <!-- Hauptinhalt des Dashboards -->
-        <main class="main-content">
-            <header class="content-header">
-                <h1 id="section-title">Dashboard</h1>
-                <div class="user-greeting">
-                    Hallo, <span id="display-username">Lerner</span>! ✨
-                </div>
-            </header>
-
-            <!-- Dynamischer Inhaltsbereich -->
-            <div id="content-view">
-                <!-- Sektionen werden per JS geladen -->
-            </div>
-        </main>
-    </div>
-
-    <!-- Eigene Skripte -->
-    <script type="module" src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

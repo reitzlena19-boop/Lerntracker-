@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 // Deine Firebase Konfiguration
 const firebaseConfig = {
@@ -18,7 +18,7 @@ const db = getFirestore(app);
 // Globale Anwendungs-Daten
 let currentUser = localStorage.getItem('currentUser') || "";
 let totalStudyMinutes = 0;
-let examsList = [];
+let examsList = []; // Jede Prüfung hat nun optional .studyMinutes
 let calendarEntries = [];
 let todosList = [];
 let communityUsers = [];
@@ -52,20 +52,12 @@ async function saveData() {
 
     try {
         await setDoc(doc(db, "users", currentUser), userData);
-        
-        communityUsers = [{
-            username: currentUser,
-            studyMinutes: totalStudyMinutes,
-            song: userSong,
-            teacher: userTeacher,
-            subject: userSubject
-        }];
     } catch (e) {
         console.error("Fehler beim Speichern in Firebase: ", e);
     }
 }
 
-// Daten aus Firebase laden
+// Daten aus Firebase laden (und alle Community-Nutzer für das Ranking holen)
 async function loadUserData(username) {
     try {
         const docRef = doc(db, "users", username);
@@ -87,23 +79,35 @@ async function loadUserData(username) {
             todosList = [];
         }
 
-        communityUsers = [{
-            username: username,
-            studyMinutes: totalStudyMinutes,
-            song: userSong,
-            teacher: userTeacher,
-            subject: userSubject
-        }];
+        // Lade alle Benutzer für die Community-Bestenliste aus Firestore
+        const querySnapshot = await getDocs(collection(db, "users"));
+        communityUsers = [];
+        querySnapshot.forEach((docSnapItem) => {
+            const uData = docSnapItem.data();
+            communityUsers.push({
+                username: docSnapItem.id,
+                studyMinutes: uData.totalStudyMinutes || 0,
+                song: uData.song || "-",
+                teacher: uData.teacher || "-",
+                subject: uData.subject || "-"
+            });
+        });
+
     } catch (e) {
         console.error("Fehler beim Laden aus Firebase: ", e);
     }
 }
 
 // Umschalten zwischen Dashboard-Sektionen
-window.switchSection = function(sectionId) {
+window.switchSection = async function(sectionId) {
     document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
     if (event && event.target) {
         event.target.classList.add('active');
+    }
+
+    // Vor Community-Ansicht immer Bestenliste frisch aus Firestore laden
+    if (sectionId === 'community' && currentUser) {
+        await loadUserData(currentUser);
     }
 
     const titleEl = document.getElementById('section-title');
@@ -155,8 +159,8 @@ window.switchSection = function(sectionId) {
         updateMiniTimerDisplay();
     } else if (sectionId === 'timer') {
         titleEl.textContent = 'Lern-Timer';
-        let examOptionsHtml = examsList.map(e => `<option value="${e.subject} (${e.type})">${e.subject} - ${e.type}</option>`).join('');
-        if (examsList.length === 0) examOptionsHtml = `<option value="Allgemein">Keine Prüfungen eingetragen</option>`;
+        let examOptionsHtml = examsList.map((e, idx) => `<option value="${idx}">${e.subject} - ${e.type}</option>`).join('');
+        if (examsList.length === 0) examOptionsHtml = `<option value="">Keine Prüfungen eingetragen</option>`;
 
         contentView.innerHTML = `
             <div class="card" style="max-width: 600px; margin: 0 auto;">
@@ -218,12 +222,15 @@ window.switchSection = function(sectionId) {
         contentView.innerHTML = `
             <div class="dashboard-grid">
                 <div class="card">
-                    <h3>Deine Prüfungen</h3>
+                    <h3>Deine Prüfungen & Lernzeiten</h3>
                     ${examsList.length === 0 ? '<p>Noch keine Prüfungen eingetragen.</p>' : `
                         <ul style="list-style: none; padding: 0;">
                             ${examsList.map((e, index) => `
                                 <li style="display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #e6d7ff;">
-                                    <span><strong>${e.subject}</strong> (${e.type})</span>
+                                    <div>
+                                        <strong>${e.subject}</strong> (${e.type})<br>
+                                        <small style="color: #6b5b95;">Bisher gelernt: <strong>${e.studyMinutes || 0} Minuten</strong></small>
+                                    </div>
                                     <button onclick="deleteExam(${index})" class="btn-sm" style="background-color: #ffcccc;">Löschen</button>
                                 </li>
                             `).join('')}
@@ -357,7 +364,7 @@ window.handleAddExam = function(event) {
     event.preventDefault();
     const subject = document.getElementById('exam-subject-input').value;
     const type = document.getElementById('exam-type-input').value;
-    examsList.push({ subject, type });
+    examsList.push({ subject, type, studyMinutes: 0 });
     saveData();
     switchSection('grades');
 };
@@ -386,8 +393,7 @@ window.startMiniTimer = function() {
         } else {
             clearInterval(timerInterval);
             isRunning = false;
-            addStudyTime(Math.floor(totalSeconds / 60));
-            alert("Lerneinheit beendet! Gut gemacht! 🎉 Deine Schildkröte freut sich!");
+            finishTimerSession(Math.floor(totalSeconds / 60));
         }
     }, 1000);
 };
@@ -421,9 +427,7 @@ window.startBigTimer = function() {
         } else {
             clearInterval(timerInterval);
             isRunning = false;
-            let learnedMins = Math.floor(totalSeconds / 60);
-            addStudyTime(learnedMins);
-            alert(`Lerneinheit erfolgreich beendet! +${learnedMins} Minuten Gesamtlernzeit. 🐢✨`);
+            finishTimerSession(Math.floor(totalSeconds / 60));
         }
     }, 1000);
 };
@@ -431,13 +435,23 @@ window.startBigTimer = function() {
 window.pauseBigTimer = function() { clearInterval(timerInterval); isRunning = false; };
 window.resetBigTimer = function() { clearInterval(timerInterval); isRunning = false; remainingSeconds = totalSeconds; updateBigTimerDisplay(); };
 
-function addStudyTime(mins) {
-    let oldMinutes = totalStudyMinutes;
-    totalStudyMinutes += mins;
+// Hilfsfunktion zum Verarbeiten der gelernten Zeit (auch für spezifische Prüfung)
+function finishTimerSession(learnedMins) {
+    totalStudyMinutes += learnedMins;
+
+    // Prüfen, ob eine spezifische Prüfung im Timer ausgewählt wurde
+    const examSelect = document.getElementById('timer-exam-select');
+    if (examSelect && examSelect.value !== "" && examsList[parseInt(examSelect.value)]) {
+        let examIdx = parseInt(examSelect.value);
+        examsList[examIdx].studyMinutes = (examsList[examIdx].studyMinutes || 0) + learnedMins;
+    }
+
     saveData();
-    
-    if (oldMinutes < 60 && totalStudyMinutes >= 60) {
-        alert("🥚 Krack! Deine Schildkröte ist aus dem Ei geschlüpft! Schau im Schildkröten-Menü nach!");
+
+    if (totalStudyMinutes - learnedMins < 60 && totalStudyMinutes >= 60) {
+        alert(`Lerneinheit beendet! +${learnedMins} Minuten. 🥚 Krack! Deine Schildkröte ist aus dem Ei geschlüpft! 🎉`);
+    } else {
+        alert(`Lerneinheit erfolgreich beendet! +${learnedMins} Minuten Gesamtlernzeit. 🐢✨`);
     }
 
     const timeDisplay = document.getElementById('total-study-time-display');
@@ -472,7 +486,7 @@ window.handleAddCalendarEntry = function(event) {
     if (type === 'exam') {
         const subject = document.getElementById('cal-exam-subject').value;
         const examType = document.getElementById('cal-exam-type').value;
-        examsList.push({ subject, type: examType });
+        examsList.push({ subject, type: examType, studyMinutes: 0 });
         calendarEntries.push({ year: currentCalendarYear, month: currentCalendarMonth, day, title: `${subject} (${examType})` });
     } else {
         const desc = document.getElementById('cal-appointment-desc').value;
